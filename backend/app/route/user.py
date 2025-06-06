@@ -2,7 +2,7 @@
 User routes.
 """
 
-from flask import Blueprint, current_app, make_response, request
+from flask import Blueprint, request
 
 from app.common.response import created_response, success_response
 from app.schema.user import (
@@ -10,7 +10,7 @@ from app.schema.user import (
     UserRegisterRequest,
 )
 from app.service.user_service import UserService
-from app.util.auth_decorators import get_current_user, login_required
+from app.util.auth_decorators import login_required
 
 user_bp = Blueprint("user", __name__)
 
@@ -137,23 +137,38 @@ def login():
             data:
               type: object
               properties:
-                id:
+                user:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "user-uuid-here"
+                    username:
+                      type: string
+                      example: "johndoe123"
+                    email:
+                      type: string
+                      example: "john@example.com"
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: "2025-06-02T12:34:56Z"
+                    updated_at:
+                      type: string
+                      format: date-time
+                      example: "2025-06-02T12:34:56Z"
+                access_token:
                   type: string
-                  example: "user-uuid-here"
-                username:
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  description: JWT access token for API authentication
+                token_type:
                   type: string
-                  example: "johndoe123"
-                email:
+                  example: "Bearer"
+                  description: Token type for Authorization header
+                remember_token:
                   type: string
-                  example: "john@example.com"
-                created_at:
-                  type: string
-                  format: date-time
-                  example: "2025-06-02T12:34:56Z"
-                updated_at:
-                  type: string
-                  format: date-time
-                  example: "2025-06-02T12:34:56Z"
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  description: JWT remember token (only present if remember_me is true)
             error:
               type: null
       400:
@@ -164,15 +179,9 @@ def login():
         description: Request validation failed
     """
     login_request = UserLoginRequest.model_validate(request.get_json())
-    user_response, cookie_response = UserService.login(login_request)
+    login_response = UserService.login(login_request)
 
-    if cookie_response:
-        # If remember me was requested, return response with cookie
-        cookie_response.data = success_response(data=user_response.model_dump()).data
-        cookie_response.status_code = 200
-        cookie_response.headers["Content-Type"] = "application/json"
-        return cookie_response
-    return success_response(data=user_response.model_dump())
+    return success_response(data=login_response)
 
 
 @user_bp.route("/logout", methods=["POST"])
@@ -197,26 +206,14 @@ def logout(current_user):
               properties:
                 message:
                   type: string
-                  example: "Logout successful"
+                  example: "Logged out successfully"
             error:
               type: null
       401:
         description: Authentication required
     """
-    UserService.logout_user()
-
-    # Clear remember me cookie if it exists
-    response = make_response(success_response(data={"message": "Logout successful"}))
-    response.set_cookie(
-        current_app.config.get("REMEMBER_COOKIE_NAME", "remember_token"),
-        "",
-        expires=0,
-        httponly=True,
-        samesite=current_app.config.get("REMEMBER_COOKIE_SAMESITE", "Lax"),
-        domain=current_app.config.get("REMEMBER_COOKIE_DOMAIN"),
-    )
-
-    return response
+    logout_response = UserService.logout_user()
+    return success_response(data=logout_response)
 
 
 @user_bp.route("/profile", methods=["GET"])

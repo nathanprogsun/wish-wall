@@ -53,10 +53,10 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
         onClose();
         loginForm.reset();
       } else {
-        setError('登录失败，请检查用户名/邮箱和密码');
+        setError('Login failed, please check your username/email and password');
       }
     } catch (err) {
-      setError('登录失败，请稍后重试');
+      setError('Login failed, please try again later');
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
 
   const handleRegister = async (data: RegisterFormData) => {
     if (data.password !== data.confirmPassword) {
-      setError('密码确认不匹配');
+      setError('Password confirmation does not match');
       return;
     }
 
@@ -81,10 +81,10 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
         onClose();
         registerForm.reset();
       } else {
-        setError('注册失败，请检查输入信息');
+        setError('Registration failed, please check your input');
       }
     } catch (err) {
-      setError('注册失败，请稍后重试');
+      setError('Registration failed, please try again later');
     } finally {
       setLoading(false);
     }
@@ -107,12 +107,12 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'login' ? '登录' : '注册'}
+            {mode === 'login' ? 'Login' : 'Register'}
           </DialogTitle>
           <DialogDescription>
             {mode === 'login' 
-              ? '登录到你的账户以发表留言和评论' 
-              : '创建新账户开始参与讨论'
+              ? 'Login to your account to post messages and comments' 
+              : 'Create a new account to start participating'
             }
           </DialogDescription>
         </DialogHeader>
@@ -127,21 +127,21 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
           <div className="space-y-4">
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login">用户名或邮箱</Label>
+                <Label htmlFor="login">Username or Email</Label>
                 <Input
                   id="login"
                   type="text"
-                  placeholder="输入用户名或邮箱"
+                  placeholder="Enter username or email"
                   {...loginForm.register('login', { required: true })}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">密码</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="输入密码"
+                  placeholder="Enter password"
                   {...loginForm.register('password', { required: true })}
                 />
               </div>
@@ -154,25 +154,25 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
                   {...loginForm.register('rememberMe')}
                 />
                 <Label htmlFor="rememberMe" className="text-sm">
-                  记住我（30天内免登录）
+                  Remember me (30 days auto-login)
                 </Label>
               </div>
 
               <Button type="submit" disabled={loading} className="w-full">
-                {loading ? '登录中...' : '登录'}
+                {loading ? 'Logging in...' : 'Login'}
               </Button>
             </form>
 
             {/* Switch to register */}
             <div className="text-center pt-4 border-t">
               <p className="text-sm text-gray-600">
-                还没有账户？{' '}
+                Don&apos;t have an account?{' '}
                 <button
                   type="button"
                   onClick={() => handleSwitchMode('register')}
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  立即注册
+                  Register now
                 </button>
               </p>
             </div>
@@ -181,11 +181,11 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
           <div className="space-y-4">
             <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">用户名</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="5-20位字母数字组合"
+                  placeholder="5-20 alphanumeric characters"
                   {...registerForm.register('username', { 
                     required: true,
                     pattern: /^[a-zA-Z0-9_]{5,20}$/
@@ -194,21 +194,21 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">邮箱</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="输入邮箱地址"
+                  placeholder="Enter email address"
                   {...registerForm.register('email', { required: true })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">密码</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="8-20位，包含大小写字母、数字和特殊符号"
+                  placeholder="8-20 chars, uppercase, lowercase, number and special char"
                   {...registerForm.register('password', { 
                     required: true,
                     pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/
@@ -217,30 +217,30 @@ export default function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthM
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">确认密码</Label>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="再次输入密码"
+                  placeholder="Enter password again"
                   {...registerForm.register('confirmPassword', { required: true })}
                 />
               </div>
 
               <Button type="submit" disabled={loading} className="w-full">
-                {loading ? '注册中...' : '注册'}
+                {loading ? 'Registering...' : 'Register'}
               </Button>
             </form>
 
             {/* Switch to login */}
             <div className="text-center pt-4 border-t">
               <p className="text-sm text-gray-600">
-                已有账户？{' '}
+                Already have an account?{' '}
                 <button
                   type="button"
                   onClick={() => handleSwitchMode('login')}
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  立即登录
+                  Login now
                 </button>
               </p>
             </div>

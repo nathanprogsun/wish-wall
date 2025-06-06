@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { formatDistanceToNow } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { Comment, commentsApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -54,10 +54,10 @@ function CommentItem({ comment, messageId, level, onReply, onRequestLogin }: Com
     try {
       return formatDistanceToNow(new Date(dateString), {
         addSuffix: true,
-        locale: zhCN,
+        locale: enUS,
       });
     } catch {
-      return '刚刚';
+      return 'just now';
     }
   };
 
@@ -105,7 +105,7 @@ function CommentItem({ comment, messageId, level, onReply, onRequestLogin }: Com
     <div className="space-y-3" style={{ marginLeft: `${marginLeft}px` }}>
       <div className="flex items-start space-x-3">
         <Avatar className="flex-shrink-0 w-8 h-8 border border-purple-200">
-          <AvatarFallback className="text-xs bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600">
+          <AvatarFallback className="text-xs text-purple-600 bg-gradient-to-br from-purple-100 to-pink-100">
             {getUserInitials(comment.author.username)}
           </AvatarFallback>
         </Avatar>
@@ -133,7 +133,7 @@ function CommentItem({ comment, messageId, level, onReply, onRequestLogin }: Com
               className="px-2 h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50"
               onClick={handleReplyClick}
             >
-              💝 {user ? '回复祝福' : '回复祝福'}
+              💝 {user ? 'Reply Blessing' : 'Reply Blessing'}
             </Button>
           </div>
 
@@ -142,7 +142,7 @@ function CommentItem({ comment, messageId, level, onReply, onRequestLogin }: Com
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-purple-600">
-                    回复 @{getDisplayName(comment.author)} 的祝福
+                    Reply to @{getDisplayName(comment.author)}&apos;s blessing
                   </span>
                   <span className={`text-xs ${
                     charCount > 200 ? 'text-red-500' : 
@@ -152,7 +152,7 @@ function CommentItem({ comment, messageId, level, onReply, onRequestLogin }: Com
                   </span>
                 </div>
                 <Textarea
-                  placeholder="送上你的祝福..."
+                  placeholder="Send your blessing..."
                   rows={3}
                   className="text-sm border-purple-200 focus:border-purple-400 focus:ring-purple-400"
                   {...form.register('content', { 
@@ -168,18 +168,18 @@ function CommentItem({ comment, messageId, level, onReply, onRequestLogin }: Com
                   type="submit" 
                   size="sm" 
                   disabled={loading || charCount < 3 || charCount > 200}
-                  className="bg-purple-500 hover:bg-purple-600 text-white"
+                  className="text-white bg-purple-500 hover:bg-purple-600"
                 >
-                  {loading ? '发送中...' : '🌟 发送'}
+                  {loading ? 'Sending...' : '🌟 Send'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setShowReplyForm(false)}
-                  className="border-purple-200 text-purple-600 hover:bg-purple-50"
+                  className="text-purple-600 border-purple-200 hover:bg-purple-50"
                 >
-                  取消
+                  Cancel
                 </Button>
               </div>
             </form>
@@ -187,10 +187,10 @@ function CommentItem({ comment, messageId, level, onReply, onRequestLogin }: Com
         </div>
       </div>
 
-      {comment.replies && comment.replies.map((child) => (
+      {comment.replies && comment.replies.map((reply) => (
         <CommentItem
-          key={child.id}
-          comment={child}
+          key={reply.id}
+          comment={reply}
           messageId={messageId}
           level={level + 1}
           onReply={onReply}
@@ -256,7 +256,7 @@ export default function CommentSection({ messageId, comments, commentCount, load
         <div className="py-4 text-center">
           <div className="inline-flex items-center space-x-2">
             <div className="w-4 h-4 rounded-full border-b-2 border-purple-600 animate-spin"></div>
-            <span className="text-sm text-gray-500">加载祝福中...</span>
+            <span className="text-sm text-gray-500">Loading blessings...</span>
           </div>
         </div>
       </div>
@@ -268,18 +268,18 @@ export default function CommentSection({ messageId, comments, commentCount, load
       <Separator className="bg-gradient-to-r from-transparent via-purple-200 to-transparent" />
       
       <div className="flex justify-between items-center">
-        <h4 className="font-medium text-gray-800 flex items-center space-x-2">
+        <h4 className="flex items-center space-x-2 font-medium text-gray-800">
           <span>💝</span>
-          <span>祝福 ({commentCount})</span>
+          <span>Blessings ({commentCount})</span>
         </h4>
         {!showForm && (
           <Button
             variant="outline"
             size="sm"
             onClick={handleWriteCommentClick}
-            className="border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300"
+            className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
           >
-            🌟 {user ? '写祝福' : '写祝福'}
+            🌟 {user ? 'Write Blessing' : 'Write Blessing'}
           </Button>
         )}
       </div>
@@ -288,7 +288,7 @@ export default function CommentSection({ messageId, comments, commentCount, load
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-purple-700 font-medium">送上你的祝福</span>
+              <span className="text-sm font-medium text-purple-700">Send your blessing</span>
               <span className={`text-sm ${
                 charCount > 200 ? 'text-red-500' : 
                 charCount > 180 ? 'text-yellow-500' : 'text-gray-500'
@@ -297,7 +297,7 @@ export default function CommentSection({ messageId, comments, commentCount, load
               </span>
             </div>
             <Textarea
-              placeholder="愿这个美好的心愿早日实现..."
+              placeholder="May this beautiful wish come true soon..."
               rows={4}
               className="border-purple-200 focus:border-purple-400 focus:ring-purple-400"
               {...form.register('content', { 
@@ -313,18 +313,18 @@ export default function CommentSection({ messageId, comments, commentCount, load
               type="submit" 
               size="sm" 
               disabled={submitting || charCount < 3 || charCount > 200}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+              className="text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
             >
-              {submitting ? '发送中...' : '✨ 发送祝福'}
+              {submitting ? 'Sending...' : '✨ Send Blessing'}
             </Button>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setShowForm(false)}
-              className="border-purple-200 text-purple-600 hover:bg-purple-50"
+              className="text-purple-600 border-purple-200 hover:bg-purple-50"
             >
-              取消
+              Cancel
             </Button>
           </div>
         </form>
@@ -344,9 +344,9 @@ export default function CommentSection({ messageId, comments, commentCount, load
       </div>
 
       {comments.length === 0 && !loading && (
-        <div className="py-8 text-center text-gray-500 space-y-2">
+        <div className="py-8 space-y-2 text-center text-gray-500">
           <div className="text-4xl">🙏</div>
-          <p>还没有人送祝福，快来送上第一个祝福吧！</p>
+          <p>No blessings yet, be the first to send a blessing!</p>
         </div>
       )}
     </div>

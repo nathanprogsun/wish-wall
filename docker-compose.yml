@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Database Service
+  mysql:
+    image: mysql:8.0
+    container_name: wish-wall-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Wish_wall@2025
+      MYSQL_DATABASE: wish_wall
+      MYSQL_USER: wish_wall_user
+      MYSQL_PASSWORD: Wish_wall@2025
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - wish-wall-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wish-wall-backend
+    restart: unless-stopped
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=Wish_wall@2025
+      - DB_NAME=wish_wall
+      - DB_CHARSET=utf8mb4
+      - SECRET_KEY=10ed11c41c9fd9fe27cdc7627559190f3069269ab79bc663fee6a6d3d1e543c4
+      - JWT_SECRET_KEY=302ccde97f7c4f5eb87ad5966025017159b4a578dad6a9e4c0fca70a42851758
+      - FLASK_ENV=development
+      - DEBUG=true
+      - HOST=0.0.0.0
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - wish-wall-network
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wish-wall-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_API_URL_SSR=http://backend:8000/api
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    volumes:
+      # Only mount source code, not node_modules
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - wish-wall-network
+
+volumes:
+  mysql_data:
+
+networks:
+  wish-wall-network:
+    driver: bridge 

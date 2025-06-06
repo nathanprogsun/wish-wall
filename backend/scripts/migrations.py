@@ -1,237 +1,240 @@
 #!/usr/bin/env python3
 """
-Database migrations script using Alembic.
-Provides commands for managing database schema changes.
+Database Migration Script
+
+Manages database schema using Alembic migrations for both production and test environments.
+This script provides a unified interface for common migration operations.
 """
 
-import argparse
 import os
 import sys
+import subprocess
+import argparse
 from pathlib import Path
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from alembic import command
-from alembic.config import Config
-from alembic.runtime.environment import EnvironmentContext
-from alembic.script import ScriptDirectory
-
-from app.common.database import get_engine
 from app.common.logger import get_logger
 from app.settings import settings
 
 logger = get_logger(__name__)
 
 
-def get_alembic_config():
-    """Get Alembic configuration."""
-    alembic_cfg = Config()
-
-    # Set the script location (migrations directory)
-    migrations_dir = project_root / "migrations"
-    alembic_cfg.set_main_option("script_location", str(migrations_dir))
-
-    # Set the SQLAlchemy URL from environment or default
-    database_url = settings.database_url
-    alembic_cfg.set_main_option("sqlalchemy.url", database_url)
-
-    return alembic_cfg
-
-
-def init_migrations():
-    """Initialize Alembic migrations directory."""
+def run_alembic_command(command: list[str], database_url: str = None, description: str = None):
+    """Run an Alembic command with optional database URL override."""
+    env = os.environ.copy()
+    
+    if database_url:
+        # Set environment variable for custom database URL
+        env['DATABASE_URL'] = database_url
+        logger.info(f"Using custom database URL: {database_url}")
+    
+    if description:
+        logger.info(f"🔧 {description}")
+    
     try:
-        alembic_cfg = get_alembic_config()
-        migrations_dir = project_root / "migrations"
-
-        if migrations_dir.exists():
-            logger.warning(f"Migrations directory already exists: {migrations_dir}")
-            return
-
-        logger.info("Initializing Alembic migrations...")
-        command.init(alembic_cfg, str(migrations_dir))
-
-        # Update env.py to use our models
-        env_py_path = migrations_dir / "env.py"
-        if env_py_path.exists():
-            update_env_py(env_py_path)
-
-        logger.info("✅ Migrations initialized successfully!")
-        logger.info(f"📁 Migrations directory: {migrations_dir}")
-
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize migrations: {e}")
-        sys.exit(1)
-
-
-def update_env_py(env_py_path: Path):
-    """Update the generated env.py file to work with our project."""
-    env_content = '''"""Alembic environment configuration."""
-
-from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
-from alembic import context
-import os
-import sys
-from pathlib import Path
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-# Import your models
-from app.model.user import User
-from app.model.message import Message  
-from app.model.comment import Comment
-from app.common.database import Base
-
-# this is the Alembic Config object
-config = context.config
-
-# Interpret the config file for Python logging
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-
-# Set target metadata
-target_metadata = Base.metadata
-
-def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
+        result = subprocess.run(
+            ["alembic"] + command,
+            cwd=project_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=True
         )
-
-        with context.begin_transaction():
-            context.run_migrations()
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
-'''
-
-    with open(env_py_path, "w") as f:
-        f.write(env_content)
-
-    logger.info("✅ Updated env.py with project configuration")
-
-
-def generate_migration(message: str):
-    """Generate a new migration."""
-    try:
-        logger.info(f"Generating migration: {message}")
-        alembic_cfg = get_alembic_config()
-        command.revision(alembic_cfg, message=message, autogenerate=True)
-        logger.info("✅ Migration generated successfully!")
-
-    except Exception as e:
-        logger.error(f"❌ Failed to generate migration: {e}")
-        sys.exit(1)
+        
+        if result.stdout:
+            logger.info(result.stdout.strip())
+        
+        return True
+        
+    except subprocess.CalledProcessError as e:
+        logger.error(f"❌ Alembic command failed: {' '.join(command)}")
+        if e.stdout:
+            logger.error(f"STDOUT: {e.stdout}")
+        if e.stderr:
+            logger.error(f"STDERR: {e.stderr}")
+        return False
 
 
-def upgrade_database():
-    """Upgrade database to latest migration."""
-    try:
-        logger.info("Upgrading database to latest migration...")
-        alembic_cfg = get_alembic_config()
-        command.upgrade(alembic_cfg, "head")
-        logger.info("✅ Database upgraded successfully!")
-
-    except Exception as e:
-        logger.error(f"❌ Failed to upgrade database: {e}")
-        sys.exit(1)
-
-
-def downgrade_database():
-    """Downgrade database by one migration."""
-    try:
-        logger.info("Downgrading database by one migration...")
-        alembic_cfg = get_alembic_config()
-        command.downgrade(alembic_cfg, "-1")
-        logger.info("✅ Database downgraded successfully!")
-
-    except Exception as e:
-        logger.error(f"❌ Failed to downgrade database: {e}")
-        sys.exit(1)
+def generate_migration(message: str, database_url: str = None):
+    """Generate a new migration file."""
+    if not message:
+        logger.error("❌ Migration message is required")
+        return False
+    
+    logger.info(f"📝 Generating migration: {message}")
+    return run_alembic_command(
+        ["revision", "--autogenerate", "-m", message],
+        database_url,
+        f"Generating migration '{message}'"
+    )
 
 
-def show_history():
+def upgrade_database(revision: str = "head", database_url: str = None):
+    """Upgrade database to a specific revision."""
+    logger.info(f"⬆️ Upgrading database to revision: {revision}")
+    return run_alembic_command(
+        ["upgrade", revision],
+        database_url,
+        f"Upgrading database to {revision}"
+    )
+
+
+def downgrade_database(revision: str, database_url: str = None):
+    """Downgrade database to a specific revision."""
+    logger.info(f"⬇️ Downgrading database to revision: {revision}")
+    return run_alembic_command(
+        ["downgrade", revision],
+        database_url,
+        f"Downgrading database to {revision}"
+    )
+
+
+def show_current_revision(database_url: str = None):
+    """Show current database revision."""
+    logger.info("📍 Checking current database revision...")
+    return run_alembic_command(
+        ["current"],
+        database_url,
+        "Showing current revision"
+    )
+
+
+def show_migration_history(database_url: str = None):
     """Show migration history."""
-    try:
-        logger.info("Migration history:")
-        alembic_cfg = get_alembic_config()
-        command.history(alembic_cfg)
+    logger.info("📚 Showing migration history...")
+    return run_alembic_command(
+        ["history"],
+        database_url,
+        "Showing migration history"
+    )
 
-    except Exception as e:
-        logger.error(f"❌ Failed to show history: {e}")
-        sys.exit(1)
+
+def reset_database(database_url: str = None):
+    """Reset database by downgrading to base and upgrading to head."""
+    logger.info("🔄 Resetting database...")
+    
+    # First downgrade to base
+    if not downgrade_database("base", database_url):
+        return False
+    
+    # Then upgrade to head
+    if not upgrade_database("head", database_url):
+        return False
+    
+    logger.info("✅ Database reset completed")
+    return True
+
+
+def setup_test_database():
+    """Set up test database with migrations."""
+    test_db_url = settings.get_test_database_url()
+    logger.info("🧪 Setting up test database...")
+    logger.info(f"Test DB URL: {test_db_url}")
+    
+    # Check if test database is accessible
+    logger.info("📡 Checking test database connection...")
+    
+    # Upgrade test database to latest
+    if not upgrade_database("head", test_db_url):
+        logger.error("❌ Failed to set up test database")
+        return False
+    
+    logger.info("✅ Test database setup completed")
+    return True
+
+
+def create_initial_migration():
+    """Create initial migration for a fresh database setup."""
+    logger.info("🆕 Creating initial migration...")
+    
+    # Check if any migrations exist
+    versions_dir = project_root / "migrations" / "versions"
+    if versions_dir.exists() and list(versions_dir.glob("*.py")):
+        logger.warning("⚠️ Migrations already exist. Use 'generate' to create new migrations.")
+        return False
+    
+    return generate_migration("Initial database schema")
 
 
 def main():
-    """Main CLI function."""
-    parser = argparse.ArgumentParser(description="Database migrations management")
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # Init command
-    subparsers.add_parser("init", help="Initialize migrations")
-
-    # Generate command
-    generate_parser = subparsers.add_parser("generate", help="Generate new migration")
-    generate_parser.add_argument(
-        "--message", "-m", required=True, help="Migration message"
+    """Main function with CLI interface."""
+    parser = argparse.ArgumentParser(description="Database Migration Management")
+    parser.add_argument(
+        "action",
+        choices=[
+            "current", "history", "generate", "upgrade", "downgrade", 
+            "reset", "setup-test", "init"
+        ],
+        help="Migration action to perform"
     )
-
-    # Upgrade command
-    subparsers.add_parser("upgrade", help="Upgrade to latest migration")
-
-    # Downgrade command
-    subparsers.add_parser("downgrade", help="Downgrade one migration")
-
-    # History command
-    subparsers.add_parser("history", help="Show migration history")
-
+    parser.add_argument(
+        "--message", "-m",
+        help="Migration message (required for generate)"
+    )
+    parser.add_argument(
+        "--revision", "-r",
+        help="Target revision (for upgrade/downgrade)"
+    )
+    parser.add_argument(
+        "--database-url",
+        help="Override database URL"
+    )
+    
     args = parser.parse_args()
-
-    if not args.command:
-        parser.print_help()
-        return
-
-    logger.info(f"🚀 Running migration command: {args.command}")
-
-    if args.command == "init":
-        init_migrations()
-    elif args.command == "generate":
-        generate_migration(args.message)
-    elif args.command == "upgrade":
-        upgrade_database()
-    elif args.command == "downgrade":
-        downgrade_database()
-    elif args.command == "history":
-        show_history()
-    else:
-        parser.print_help()
+    
+    try:
+        if args.action == "current":
+            success = show_current_revision(args.database_url)
+            
+        elif args.action == "history":
+            success = show_migration_history(args.database_url)
+            
+        elif args.action == "generate":
+            if not args.message:
+                logger.error("❌ --message is required for generate action")
+                sys.exit(1)
+            success = generate_migration(args.message, args.database_url)
+            
+        elif args.action == "upgrade":
+            revision = args.revision or "head"
+            success = upgrade_database(revision, args.database_url)
+            
+        elif args.action == "downgrade":
+            if not args.revision:
+                logger.error("❌ --revision is required for downgrade action")
+                sys.exit(1)
+            success = downgrade_database(args.revision, args.database_url)
+            
+        elif args.action == "reset":
+            success = reset_database(args.database_url)
+            
+        elif args.action == "setup-test":
+            success = setup_test_database()
+            
+        elif args.action == "init":
+            success = create_initial_migration()
+            
+        else:
+            logger.error(f"❌ Unknown action: {args.action}")
+            sys.exit(1)
+        
+        if not success:
+            logger.error(f"❌ Action '{args.action}' failed")
+            sys.exit(1)
+        
+        logger.info(f"✅ Action '{args.action}' completed successfully")
+        
+    except KeyboardInterrupt:
+        logger.info("⏹️ Operation cancelled by user")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"❌ Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

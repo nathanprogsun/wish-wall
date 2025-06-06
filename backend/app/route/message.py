@@ -61,7 +61,7 @@ def get_messages():
                         example: "msg-uuid-here"
                       content:
                         type: string
-                        example: "我希望世界和平"
+                        example: "I hope for world peace and happiness for everyone"
                       author:
                         type: object
                         properties:
@@ -133,7 +133,7 @@ def get_message(message_id):
                   example: "msg-uuid-here"
                 content:
                   type: string
-                  example: "我希望世界和平"
+                  example: "I hope for world peace and happiness for everyone"
                 author:
                   type: object
                   properties:
@@ -215,7 +215,7 @@ def create_message(current_user):
               type: string
               minLength: 3
               maxLength: 200
-              example: "我希望世界和平，人人都有美好的一天！"
+              example: "I hope for world peace and happiness for everyone"
               description: Message content (3-200 characters)
     responses:
       201:
@@ -234,7 +234,7 @@ def create_message(current_user):
                   example: "msg-uuid-here"
                 content:
                   type: string
-                  example: "我希望世界和平，人人都有美好的一天！"
+                  example: "I hope for world peace and happiness for everyone"
                 author:
                   type: object
                   properties:

@@ -30,26 +30,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuthStatus();
+    initializeAuth();
   }, []);
 
-  const checkAuthStatus = async () => {
+  const initializeAuth = async () => {
     try {
-      // Try to get profile using session cookies
-      const response = await authApi.getProfile();
-      if (response.status === 200 && response.data) {
-        setUser(response.data);
-      } else if (response.status === 401 || response.status === 403) {
-        // Authentication failed - user not logged in
-        setUser(null);
-      } else {
-        // Other error responses
-        console.log('Failed to fetch user profile:', response.error);
-        setUser(null);
-      }
-    } catch (error: any) {
-      // Handle network errors or other exceptions
-      console.log('No active session - user not logged in');
+      // Use the new initializeAuth method that handles JWT tokens
+      const userData = await authApi.initializeAuth();
+      setUser(userData);
+    } catch (error) {
+      console.log('Failed to initialize auth:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -60,19 +50,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const loginResponse = await authApi.login({ login, password, remember_me: rememberMe });
       if (loginResponse.status === 200) {
-        // After successful login, fetch complete user profile
+        // JWT tokens are already stored in the login method
+        // Now fetch the user profile
         try {
           const profileResponse = await authApi.getProfile();
           if (profileResponse.status === 200) {
             setUser(profileResponse.data);
             return true;
+          } else {
+            // If profile fetch fails but login succeeded, use user data from login response
+            if (loginResponse.data && loginResponse.data.user) {
+              setUser(loginResponse.data.user);
+              return true;
+            }
           }
         } catch (profileError) {
           console.error('Failed to fetch profile after login:', profileError);
-          // Even if profile fetch fails, login was successful
-          // Use the user data from login response as fallback
-          setUser(loginResponse.data);
-          return true;
+          // Use user data from login response as fallback
+          if (loginResponse.data && loginResponse.data.user) {
+            setUser(loginResponse.data.user);
+            return true;
+          }
         }
       }
       return false;
@@ -88,6 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
+      // Always clear user state, even if logout request fails
       setUser(null);
     }
   };

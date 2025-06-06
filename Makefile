@@ -1,135 +1,180 @@
-.PHONY: help dev install clean backend frontend test lint format stop
+.PHONY: help dev install clean backend frontend test lint format stop docker-build docker-up docker-down docker-logs docker-clean
 
 # Default target
 help:
-	@echo "🎯 Wish Wall - 许愿墙项目管理"
+	@echo "🎯 Wish Wall - Project Management"
 	@echo ""
-	@echo "🚀 快速启动:"
-	@echo "  make dev              - 一键启动全栈服务 (后端先启动10秒)"
+	@echo "🚀 Quick Start:"
+	@echo "  make dev              - Start full-stack services (backend starts 10s first)"
+	@echo "  make docker-up        - Start full-stack services with Docker"
 	@echo ""
-	@echo "🔧 独立启动:"
-	@echo "  make backend          - 启动后端开发服务"
-	@echo "  make frontend         - 启动前端开发服务"
+	@echo "🔧 Individual Services:"
+	@echo "  make backend          - Start backend development server"
+	@echo "  make frontend         - Start frontend development server"
 	@echo ""
-	@echo "📦 项目管理:"
-	@echo "  make install          - 安装所有依赖"
-	@echo "  make clean            - 清理缓存和临时文件"
-	@echo "  make test             - 运行所有测试"
-	@echo "  make lint             - 代码检查"
-	@echo "  make format           - 格式化代码"
-	@echo "  make stop             - 停止所有服务"
+	@echo "🐳 Docker Management:"
+	@echo "  make docker-build     - Build Docker images"
+	@echo "  make docker-up        - Start Docker containers"
+	@echo "  make docker-down      - Stop Docker containers"
+	@echo "  make docker-logs      - View Docker logs"
+	@echo "  make docker-clean     - Clean Docker resources"
 	@echo ""
-	@echo "🗄️  数据库管理:"
-	@echo "  make db-init          - 初始化数据库"
-	@echo "  make db-migrate       - 运行数据库迁移"
-	@echo "  make db-seed          - 生成种子数据"
+	@echo "📦 Project Management:"
+	@echo "  make install          - Install all dependencies"
+	@echo "  make clean            - Clean cache and temporary files"
+	@echo "  make test             - Run all tests"
+	@echo "  make lint             - Code linting"
+	@echo "  make format           - Format code"
+	@echo "  make stop             - Stop all services"
 	@echo ""
-	@echo "📊 项目信息:"
-	@echo "  make status           - 查看服务状态"
-	@echo "  make logs             - 查看服务日志"
+	@echo "🗄️  Database Management:"
+	@echo "  make db-init          - Initialize database"
+	@echo "  make db-migrate       - Run database migrations"
+	@echo "  make db-seed          - Generate seed data"
+	@echo ""
+	@echo "📊 Project Information:"
+	@echo "  make status           - Check service status"
+	@echo "  make logs             - View service logs"
 
-# 🚀 一键启动 - 后端先启动10秒，再启动前端
-dev:
-	@echo "🚀 启动 Wish Wall 全栈应用..."
-	@echo "📍 后端: http://localhost:8000"
-	@echo "📍 前端: http://localhost:3000"
-	@echo "📍 API文档: http://localhost:8000/api/docs"
+# 🐳 Build Docker images
+docker-build:
+	@echo "🐳 Building Docker images..."
+	@docker-compose build
+
+# 🐳 Start Docker services
+docker-up:
+	@echo "🐳 Starting Wish Wall full-stack application with Docker..."
+	@echo "📍 Frontend: http://localhost:3000"
+	@echo "📍 Backend: http://localhost:8000"
+	@echo "📍 Database: localhost:3306"
 	@echo ""
-	@echo "🔧 正在启动后端服务..."
+	@docker-compose up -d
+	@echo "✅ All services started"
+	@echo "🔍 View logs: make docker-logs"
+	@echo "🛑 Stop services: make docker-down"
+
+# 🐳 Stop Docker services
+docker-down:
+	@echo "🐳 Stopping Docker containers..."
+	@docker-compose down
+	@echo "✅ All containers stopped"
+
+# 🐳 View Docker logs
+docker-logs:
+	@echo "🐳 Viewing Docker container logs..."
+	@docker-compose logs -f
+
+# 🐳 Clean Docker resources
+docker-clean:
+	@echo "🐳 Cleaning Docker resources..."
+	@docker-compose down -v --remove-orphans
+	@docker system prune -f
+	@echo "✅ Docker resources cleaned"
+
+# 🚀 Quick start - backend starts 10s first, then frontend
+dev:
+	@echo "🚀 Starting Wish Wall full-stack application..."
+	@echo "📍 Backend: http://localhost:8000"
+	@echo "📍 Frontend: http://localhost:3000"
+	@echo "📍 API Docs: http://localhost:8000/api/docs"
+	@echo ""
+	@echo "🔧 Starting backend service..."
 	@cd backend && poetry run python -m app &
-	@echo "⏳ 等待后端服务启动 (10秒)..."
+	@echo "⏳ Waiting for backend service to start (10 seconds)..."
 	@sleep 10
-	@echo "🎨 正在启动前端服务..."
+	@echo "🎨 Starting frontend service..."
 	@cd frontend && npm run dev
 
-# 📦 安装所有依赖
+# 📦 Install all dependencies
 install:
-	@echo "📦 安装依赖..."
-	@echo "  - 安装后端依赖 (Poetry)..."
+	@echo "📦 Installing dependencies..."
+	@echo "  - Installing backend dependencies (Poetry)..."
 	@cd backend && poetry install
-	@echo "  - 安装前端依赖 (npm)..."
+	@echo "  - Installing frontend dependencies (npm)..."
 	@cd frontend && npm install
-	@echo "✅ 依赖安装完成"
+	@echo "✅ Dependencies installation completed"
 
-# 🧹 清理项目
+# 🧹 Clean project
 clean:
-	@echo "🧹 清理项目缓存..."
+	@echo "🧹 Cleaning project cache..."
 	@cd backend && poetry run python -c "import shutil; import os; [shutil.rmtree(d, ignore_errors=True) for d in ['.pytest_cache', '__pycache__', '.mypy_cache', '.ruff_cache']]"
 	@cd frontend && rm -rf .next node_modules/.cache
-	@echo "✅ 清理完成"
+	@echo "✅ Cleaning completed"
 
-# 🔧 后端开发服务
+# 🔧 Backend development service
 backend:
-	@echo "🔧 启动后端开发服务..."
-	@echo "📍 后端服务: http://localhost:8000"
-	@echo "📍 API文档: http://localhost:8000/api/docs"
+	@echo "🔧 Starting backend development service..."
+	@echo "📍 Backend service: http://localhost:8000"
+	@echo "📍 API Docs: http://localhost:8000/api/docs"
 	@echo ""
 	@cd backend && poetry run python -m app
 
-# 🎨 前端开发服务
+# 🎨 Frontend development service
 frontend:
-	@echo "🎨 启动前端开发服务..."
-	@echo "📍 前端应用: http://localhost:3000"
+	@echo "🎨 Starting frontend development service..."
+	@echo "📍 Frontend application: http://localhost:3000"
 	@echo ""
 	@cd frontend && npm run dev
 
-# 🗄️ 数据库管理
+# 🗄️ Database management
 db-init:
-	@echo "🗄️ 初始化数据库..."
+	@echo "🗄️ Initializing database..."
 	@cd backend && make migrations-init || true
 	@cd backend && make migrations-upgrade || true
 
 db-migrate:
-	@echo "🗄️ 运行数据库迁移..."
+	@echo "🗄️ Running database migrations..."
 	@cd backend && make migrations-upgrade
 
 db-seed:
-	@echo "🌱 生成种子数据..."
+	@echo "🌱 Generating seed data..."
 	@cd backend && make seed
 
-# 🧪 测试
+# 🧪 Testing
 test:
-	@echo "🧪 运行测试..."
-	@echo "  - 后端测试..."
+	@echo "🧪 Running tests..."
+	@echo "  - Backend tests..."
 	@cd backend && make test
-	@echo "  - 前端测试..."
+	@echo "  - Frontend tests..."
 	@cd frontend && npm run lint
 
-# 🔍 代码检查
+# 🔍 Code linting
 lint:
-	@echo "🔍 代码检查..."
-	@echo "  - 后端检查..."
+	@echo "🔍 Code linting..."
+	@echo "  - Backend linting..."
 	@cd backend && make lint
-	@echo "  - 前端检查..."
+	@echo "  - Frontend linting..."
 	@cd frontend && npm run lint
 
-# ✨ 代码格式化
+# ✨ Code formatting
 format:
-	@echo "✨ 格式化代码..."
-	@echo "  - 后端格式化..."
+	@echo "✨ Formatting code..."
+	@echo "  - Backend formatting..."
 	@cd backend && make format
-	@echo "  - 前端格式化 (通过lint)..."
+	@echo "  - Frontend formatting (via lint)..."
 	@cd frontend && npm run lint
 
-# 🛑 停止服务
+# 🛑 Stop services
 stop:
-	@echo "🛑 停止所有服务..."
+	@echo "🛑 Stopping all services..."
 	@pkill -f "python -m app" || true
 	@pkill -f "next dev" || true
-	@echo "✅ 所有服务已停止"
+	@echo "✅ All services stopped"
 
-# 📊 状态检查
+# 📊 Status check
 status:
-	@echo "📊 服务状态检查..."
-	@echo "🔧 后端服务 (端口 8000):"
-	@lsof -i :8000 || echo "  ❌ 后端服务未运行"
-	@echo "🎨 前端服务 (端口 3000):"
-	@lsof -i :3000 || echo "  ❌ 前端服务未运行"
+	@echo "📊 Service status check..."
+	@echo "🔧 Backend service (port 8000):"
+	@lsof -i :8000 || echo "  ❌ Backend service not running"
+	@echo "🎨 Frontend service (port 3000):"
+	@lsof -i :3000 || echo "  ❌ Frontend service not running"
+	@echo "🐳 Docker container status:"
+	@docker-compose ps 2>/dev/null || echo "  ❌ Docker services not running"
 
-# 📜 查看日志
+# 📜 View logs
 logs:
-	@echo "📜 查看最近的日志..."
-	@echo "🔧 后端日志:"
-	@cd backend && find logs -name "*.log" -exec tail -n 10 {} \; 2>/dev/null || echo "  ℹ️  暂无后端日志"
-	@echo "🎨 前端日志:"
-	@echo "  ℹ️  前端日志在控制台输出" 
+	@echo "📜 Viewing recent logs..."
+	@echo "🔧 Backend logs:"
+	@cd backend && find logs -name "*.log" -exec tail -n 10 {} \; 2>/dev/null || echo "  ℹ️  No backend logs available"
+	@echo "🎨 Frontend logs:"
+	@echo "  ℹ️  Frontend logs are output to console" 

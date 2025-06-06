@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { Message, Comment, messagesApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -28,7 +28,7 @@ export default function MessageCard({ message, onRequestLogin }: MessageCardProp
   };
 
   const getWishIcon = (messageId: string) => {
-    // 使用消息ID生成确定性图标，避免hydration错误
+    // Use message ID to generate deterministic icon, avoiding hydration errors
     const icons = ['🌟', '✨', '💫', '⭐', '🌠', '💝', '🎋', '🌙'];
     const hash = messageId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return icons[hash % icons.length];
@@ -38,16 +38,16 @@ export default function MessageCard({ message, onRequestLogin }: MessageCardProp
     try {
       return formatDistanceToNow(new Date(dateString), {
         addSuffix: true,
-        locale: zhCN,
+        locale: enUS,
       });
     } catch {
-      return '刚刚';
+      return 'just now';
     }
   };
 
   const handleToggleComments = async () => {
     if (!showComments) {
-      // 展开评论时，重新获取最新的message数据以确保嵌套结构正确
+      // When expanding comments, re-fetch latest message data to ensure correct nested structure
       setLoadingComments(true);
       try {
         const response = await messagesApi.getById(message.id);
@@ -64,23 +64,9 @@ export default function MessageCard({ message, onRequestLogin }: MessageCardProp
     setShowComments(!showComments);
   };
 
-  const handleCommentAdded = async (newComment: Comment) => {
-    // 当新评论添加后，重新获取完整的message数据以确保嵌套结构正确
-    try {
-      setLoadingComments(true);
-      const response = await messagesApi.getById(message.id);
-      if (response.status === 200) {
-        setComments(response.data.comments || []);
-        setCommentCount(response.data.comment_count);
-      }
-    } catch (error) {
-      console.error('Failed to refresh comments:', error);
-      // 如果重新获取失败，fallback到简单的添加方式
-      setComments([newComment, ...comments]);
-      setCommentCount(commentCount + 1);
-    } finally {
-      setLoadingComments(false);
-    }
+  const handleCommentAdded = (newComment: Comment) => {
+    setComments([newComment, ...comments]);
+    setCommentCount(commentCount + 1);
   };
 
   const handleAddCommentClick = () => {
@@ -108,7 +94,7 @@ export default function MessageCard({ message, onRequestLogin }: MessageCardProp
               <div className="font-semibold text-gray-800">
                 {message.author.display_name || message.author.username}
               </div>
-              <span className="text-sm text-gray-500">许了一个愿</span>
+              <span className="text-sm text-gray-500">made a wish</span>
             </div>
             <div className="text-sm text-gray-500">
               {formatDate(message.created_at)}
@@ -138,7 +124,7 @@ export default function MessageCard({ message, onRequestLogin }: MessageCardProp
               disabled={loadingComments}
             >
               <span className="mr-2">💭</span>
-              {loadingComments ? '加载中...' : showComments ? '收起祝福' : `查看祝福 (${commentCount})`}
+              {loadingComments ? 'Loading...' : showComments ? 'Hide Blessings' : `View Blessings (${commentCount})`}
             </Button>
 
             <Button
@@ -148,21 +134,19 @@ export default function MessageCard({ message, onRequestLogin }: MessageCardProp
               className="text-purple-600 border-purple-200 transition-colors hover:bg-purple-50 hover:border-purple-300"
             >
               <span className="mr-1">🙏</span>
-              {user ? '送祝福' : '送祝福'}
+              {user ? 'Send Blessing' : 'Send Blessing'}
             </Button>
           </div>
 
           {showComments && (
-            <div className="p-4 mt-4 bg-gradient-to-r rounded-lg from-purple-50/50 to-pink-50/50">
-              <CommentSection
-                messageId={message.id}
-                comments={comments}
-                commentCount={commentCount}
-                loading={loadingComments}
-                onCommentAdded={handleCommentAdded}
-                onRequestLogin={onRequestLogin}
-              />
-            </div>
+            <CommentSection
+              messageId={message.id}
+              comments={comments}
+              commentCount={commentCount}
+              loading={loadingComments}
+              onCommentAdded={handleCommentAdded}
+              onRequestLogin={onRequestLogin}
+            />
           )}
         </div>
       </CardContent>

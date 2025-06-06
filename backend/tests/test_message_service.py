@@ -37,10 +37,15 @@ def test_create_message_user_not_found(db_session):
 
 def test_get_message_success(db_session, test_message):
     """Test successful message retrieval."""
-    response = MessageService.get_message(test_message.id)
+    # Access message attributes to avoid detached instance errors
+    message_id = test_message.id
+    message_content = test_message.content
+    
+    response = MessageService.get_message(message_id)
 
-    assert response.id == test_message.id
-    assert response.content == test_message.content
+    assert response.id == message_id
+    assert response.content == message_content
+    assert response.author is not None
 
 
 def test_get_message_not_found(db_session):
@@ -91,6 +96,9 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
     print("🚀 CREATING COMPLEX NESTED COMMENT STRUCTURE")
     print("=" * 60)
 
+    # Access user attributes to avoid detached instance errors
+    user_id = test_user.id
+
     # Step 1: Create multiple messages to show different nesting patterns
     print("\n📝 Creating Messages...")
 
@@ -98,19 +106,19 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
     message_a_request = MessageCreateRequest(
         content="Discussion about AI technology trends"
     )
-    message_a = MessageService.create_message(test_user.id, message_a_request)
+    message_a = MessageService.create_message(user_id, message_a_request)
     print(f"✅ Message A: '{message_a.content}' (ID: {message_a.id[:8]}...)")
 
     # Message B - Simple nesting (Earlier)
     message_b_request = MessageCreateRequest(
         content="Simple discussion about programming"
     )
-    message_b = MessageService.create_message(test_user.id, message_b_request)
+    message_b = MessageService.create_message(user_id, message_b_request)
     print(f"✅ Message B: '{message_b.content}' (ID: {message_b.id[:8]}...)")
 
     # Message C - Minimal nesting (Earliest)
     message_c_request = MessageCreateRequest(content="Weekend plans")
-    message_c = MessageService.create_message(test_user.id, message_c_request)
+    message_c = MessageService.create_message(user_id, message_c_request)
     print(f"✅ Message C: '{message_c.content}' (ID: {message_c.id[:8]}...)")
 
     # Step 2: Create complex nested comments for Message A
@@ -120,17 +128,17 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
     comment_a1_request = CommentCreateRequest(
         content="Great topic! AI is revolutionary", message_id=message_a.id
     )
-    comment_a1 = CommentService.create_comment(test_user.id, comment_a1_request)
+    comment_a1 = CommentService.create_comment(user_id, comment_a1_request)
 
     comment_a2_request = CommentCreateRequest(
         content="How will this affect education?", message_id=message_a.id
     )
-    comment_a2 = CommentService.create_comment(test_user.id, comment_a2_request)
+    comment_a2 = CommentService.create_comment(user_id, comment_a2_request)
 
     comment_a3_request = CommentCreateRequest(
         content="What about privacy concerns?", message_id=message_a.id
     )
-    CommentService.create_comment(test_user.id, comment_a3_request)
+    CommentService.create_comment(user_id, comment_a3_request)
 
     # Create deep nesting under comment_a1 (50+ levels)
     print("   🔗 Creating 50+ levels of deep nesting...")
@@ -147,7 +155,7 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
             parent_id=current_parent_id,
         )
         nested_comment = CommentService.create_comment(
-            test_user.id, nested_comment_request
+            user_id, nested_comment_request
         )
         comment_ids.append(nested_comment.id)
         current_parent_id = nested_comment.id
@@ -164,14 +172,14 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
         message_id=message_a.id,
         parent_id=comment_a1.id,  # Branch off from root comment
     )
-    CommentService.create_comment(test_user.id, reply_1_1_2_request)
+    CommentService.create_comment(user_id, reply_1_1_2_request)
 
     reply_1_2_request = CommentCreateRequest(
         content="The future is exciting!",
         message_id=message_a.id,
         parent_id=comment_a1.id,  # Another branch from root
     )
-    CommentService.create_comment(test_user.id, reply_1_2_request)
+    CommentService.create_comment(user_id, reply_1_2_request)
 
     # Create nested comment under comment_a2
     reply_2_1_request = CommentCreateRequest(
@@ -179,7 +187,7 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
         message_id=message_a.id,
         parent_id=comment_a2.id,
     )
-    CommentService.create_comment(test_user.id, reply_2_1_request)
+    CommentService.create_comment(user_id, reply_2_1_request)
 
     # Step 3: Create simple comments for Message B
     print("\n💬 Creating Simple Comments for Message B...")
@@ -187,17 +195,17 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
     comment_b1_request = CommentCreateRequest(
         content="Python is my favorite language", message_id=message_b.id
     )
-    comment_b1 = CommentService.create_comment(test_user.id, comment_b1_request)
+    comment_b1 = CommentService.create_comment(user_id, comment_b1_request)
 
     comment_b2_request = CommentCreateRequest(
         content="JavaScript is also great", message_id=message_b.id
     )
-    CommentService.create_comment(test_user.id, comment_b2_request)
+    CommentService.create_comment(user_id, comment_b2_request)
 
     comment_b3_request = CommentCreateRequest(
         content="What about performance?", message_id=message_b.id
     )
-    CommentService.create_comment(test_user.id, comment_b3_request)
+    CommentService.create_comment(user_id, comment_b3_request)
 
     # One level of nesting for Message B
     reply_b1_1_request = CommentCreateRequest(
@@ -205,7 +213,7 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
         message_id=message_b.id,
         parent_id=comment_b1.id,
     )
-    CommentService.create_comment(test_user.id, reply_b1_1_request)
+    CommentService.create_comment(user_id, reply_b1_1_request)
 
     print("   ✅ Message B comments created with simple nesting")
 
@@ -215,7 +223,7 @@ def test_list_messages_with_deep_nested_comments_structure(db_session, test_user
     comment_c1_request = CommentCreateRequest(
         content="Going hiking this weekend!", message_id=message_c.id
     )
-    CommentService.create_comment(test_user.id, comment_c1_request)
+    CommentService.create_comment(user_id, comment_c1_request)
 
     print("   ✅ Message C comment created (minimal structure)")
 
@@ -299,14 +307,20 @@ def test_list_messages_success(db_session, multiple_messages):
 
 def test_list_messages_with_search(db_session, test_message):
     """Test message listing with search."""
+    # Access message attributes to avoid detached instance errors
+    message_content = test_message.content
+    
     request = MessageListRequest(
-        page_index=1, page_size=10, search=test_message.content[:10]
+        page_index=1, page_size=10, search=message_content[:10]
     )
 
     response = MessageService.list_messages(request)
 
     assert response.total >= 1
     assert len(response.messages) >= 1
+    # Verify at least one message contains the search term
+    found = any(message_content[:10].lower() in msg.content.lower() for msg in response.messages)
+    assert found
 
 
 def test_list_messages_empty_result(db_session):
@@ -323,21 +337,24 @@ def test_list_messages_empty_result(db_session):
 
 def test_hierarchical_comment_structure_in_message_response(db_session, test_user):
     """Test that MessageService returns comments in hierarchical tree structure."""
+    # Access user attributes to avoid detached instance errors
+    user_id = test_user.id
+    
     # Create a message
     message_request = MessageCreateRequest(content="Test message for tree structure")
-    message = MessageService.create_message(test_user.id, message_request)
+    message = MessageService.create_message(user_id, message_request)
 
     # Create root comment
     root_comment_request = CommentCreateRequest(
         content="Root comment", message_id=message.id
     )
-    root_comment = CommentService.create_comment(test_user.id, root_comment_request)
+    root_comment = CommentService.create_comment(user_id, root_comment_request)
 
     # Create first reply
     reply1_request = CommentCreateRequest(
         content="First reply to root", message_id=message.id, parent_id=root_comment.id
     )
-    reply1 = CommentService.create_comment(test_user.id, reply1_request)
+    reply1 = CommentService.create_comment(user_id, reply1_request)
 
     # Create nested reply (reply to reply1)
     nested_reply_request = CommentCreateRequest(
@@ -345,13 +362,13 @@ def test_hierarchical_comment_structure_in_message_response(db_session, test_use
         message_id=message.id,
         parent_id=reply1.id,
     )
-    nested_reply = CommentService.create_comment(test_user.id, nested_reply_request)
+    nested_reply = CommentService.create_comment(user_id, nested_reply_request)
 
     # Create second reply to root
     reply2_request = CommentCreateRequest(
         content="Second reply to root", message_id=message.id, parent_id=root_comment.id
     )
-    reply2 = CommentService.create_comment(test_user.id, reply2_request)
+    reply2 = CommentService.create_comment(user_id, reply2_request)
 
     # Get the message with hierarchical comments
     message_response = MessageService.get_message(message.id)
@@ -403,44 +420,56 @@ def test_to_comments_tree_method_directly(db_session, test_user, test_message):
     """Test the to_comments_tree method directly with various scenarios."""
     print("\n🧪 Testing to_comments_tree method directly...")
 
-    # Create test comments with known structure
+    # Access user and message attributes to avoid detached instance errors
+    user_id = test_user.id
+    message_id = test_message.id
+
+    # Create test comments with known structure using CommentService
     # Root comment 1
-    root1 = Comment.create_comment(
-        content="Root comment 1", author_id=test_user.id, message_id=test_message.id
+    root1_request = CommentCreateRequest(
+        content="Root comment 1", message_id=message_id
     )
+    root1 = CommentService.create_comment(user_id, root1_request)
 
     # Root comment 2
-    root2 = Comment.create_comment(
-        content="Root comment 2", author_id=test_user.id, message_id=test_message.id
+    root2_request = CommentCreateRequest(
+        content="Root comment 2", message_id=message_id
     )
+    root2 = CommentService.create_comment(user_id, root2_request)
 
     # Reply to root1
-    reply1_1 = Comment.create_comment(
+    reply1_1_request = CommentCreateRequest(
         content="Reply 1 to root 1",
-        author_id=test_user.id,
-        message_id=test_message.id,
+        message_id=message_id,
         parent_id=root1.id,
     )
+    reply1_1 = CommentService.create_comment(user_id, reply1_1_request)
 
     # Reply to root1
-    reply1_2 = Comment.create_comment(
+    reply1_2_request = CommentCreateRequest(
         content="Reply 2 to root 1",
-        author_id=test_user.id,
-        message_id=test_message.id,
+        message_id=message_id,
         parent_id=root1.id,
     )
+    reply1_2 = CommentService.create_comment(user_id, reply1_2_request)
 
     # Nested reply (reply to reply1_1)
-    nested_reply = Comment.create_comment(
+    nested_reply_request = CommentCreateRequest(
         content="Nested reply to reply 1",
-        author_id=test_user.id,
-        message_id=test_message.id,
+        message_id=message_id,
         parent_id=reply1_1.id,
     )
+    nested_reply = CommentService.create_comment(user_id, nested_reply_request)
 
-    # Get all comments as flat list
-    all_comments = Comment.find_all_comments_by_message_id(test_message.id)
-    user_map = {test_user.id: test_user}
+    # Get all comments as flat list using database session
+    from app.model.comment import Comment
+    all_comments = db_session.query(Comment).filter(Comment.message_id == message_id).all()
+    
+    # Reload user from database to avoid detached instance
+    from app.model.user import User
+    fresh_user = db_session.query(User).filter(User.id == user_id).first()
+    user_map = {user_id: fresh_user}
+    
     # Test the method directly
     tree_result = MessageService.to_comments_tree(all_comments, user_map)
 
@@ -503,99 +532,107 @@ def test_to_comments_tree_empty_and_edge_cases(db_session):
     empty_result = MessageService.to_comments_tree([], {})
     assert empty_result == []
 
-    # Test single comment (we need to create a minimal comment for this)
-    # This would require more complex setup, so we'll keep it simple
     print("✅ Edge cases test passed!")
 
 
 def test_to_comments_tree_sorting_order(db_session, test_user):
     """Test that to_comments_tree maintains proper sorting order."""
-    # Create a dedicated message for this test
-    from app.model.message import Message
+    # Access user attributes to avoid detached instance errors
+    user_id = test_user.id
+    
+    # Create a dedicated message for this test using MessageService
+    test_message_request = MessageCreateRequest(content="Test message for sorting")
+    test_message = MessageService.create_message(user_id, test_message_request)
+    message_id = test_message.id
 
-    test_message = Message.create_message(
-        content="Test message for sorting", author_id=test_user.id
+    # Create comments using CommentService
+    first_root_request = CommentCreateRequest(
+        content="First root comment", message_id=message_id
     )
+    first_root = CommentService.create_comment(user_id, first_root_request)
 
-    # Create comments
-    Comment.create_comment(
-        content="First root comment", author_id=test_user.id, message_id=test_message.id
+    second_root_request = CommentCreateRequest(
+        content="Second root comment", message_id=message_id
     )
+    second_root = CommentService.create_comment(user_id, second_root_request)
 
-    Comment.create_comment(
-        content="Second root comment",
-        author_id=test_user.id,
-        message_id=test_message.id,
+    # Create root with replies
+    root_with_replies_request = CommentCreateRequest(
+        content="Root with replies", message_id=message_id
     )
+    root_with_replies = CommentService.create_comment(user_id, root_with_replies_request)
 
-    # Create replies to root1 (we need to get root1 first)
-    root1 = Comment.create_comment(
-        content="Root with replies", author_id=test_user.id, message_id=test_message.id
-    )
-
-    Comment.create_comment(
+    # Create replies to root_with_replies
+    first_reply_request = CommentCreateRequest(
         content="First reply",
-        author_id=test_user.id,
-        message_id=test_message.id,
-        parent_id=root1.id,
+        message_id=message_id,
+        parent_id=root_with_replies.id,
     )
+    first_reply = CommentService.create_comment(user_id, first_reply_request)
 
-    Comment.create_comment(
+    second_reply_request = CommentCreateRequest(
         content="Second reply",
-        author_id=test_user.id,
-        message_id=test_message.id,
-        parent_id=root1.id,
+        message_id=message_id,
+        parent_id=root_with_replies.id,
     )
+    second_reply = CommentService.create_comment(user_id, second_reply_request)
 
-    # Get tree structure
-    all_comments = Comment.find_all_comments_by_message_id(test_message.id)
-    user_map = {test_user.id: test_user}
+    # Get tree structure using database session
+    from app.model.comment import Comment
+    all_comments = db_session.query(Comment).filter(Comment.message_id == message_id).all()
+    
+    # Reload user from database to avoid detached instance
+    from app.model.user import User
+    fresh_user = db_session.query(User).filter(User.id == user_id).first()
+    user_map = {user_id: fresh_user}
     tree_result = MessageService.to_comments_tree(all_comments, user_map)
 
     # Basic structure validation
     assert len(tree_result) == 3  # Three root comments
 
     # Find the root comment with replies
-    root_with_replies = None
+    root_with_replies_result = None
     roots_without_replies = []
 
     for root in tree_result:
         if len(root.replies) > 0:
-            root_with_replies = root
+            root_with_replies_result = root
         else:
             roots_without_replies.append(root)
 
-    assert root_with_replies is not None
+    assert root_with_replies_result is not None
     assert len(roots_without_replies) == 2  # Two roots without replies
-    assert len(root_with_replies.replies) == 2  # Two replies
+    assert len(root_with_replies_result.replies) == 2  # Two replies
 
     print("✅ Basic sorting and structure test passed!")
 
 
-# 将这些测试添加到现有测试的末尾
 def test_message_list_with_hierarchical_comments(db_session, test_user):
     """Test that message list also returns hierarchical comment structure."""
+    # Access user attributes to avoid detached instance errors
+    user_id = test_user.id
+    
     # Create multiple messages with different comment structures
     message1_request = MessageCreateRequest(content="Message with nested comments")
-    message1 = MessageService.create_message(test_user.id, message1_request)
+    message1 = MessageService.create_message(user_id, message1_request)
 
     message2_request = MessageCreateRequest(content="Message with simple comments")
-    message2 = MessageService.create_message(test_user.id, message2_request)
+    message2 = MessageService.create_message(user_id, message2_request)
 
     # Add nested comments to message1
     root1_request = CommentCreateRequest(content="Root 1", message_id=message1.id)
-    root1 = CommentService.create_comment(test_user.id, root1_request)
+    root1 = CommentService.create_comment(user_id, root1_request)
 
     reply1_request = CommentCreateRequest(
         content="Reply to Root 1", message_id=message1.id, parent_id=root1.id
     )
-    CommentService.create_comment(test_user.id, reply1_request)
+    CommentService.create_comment(user_id, reply1_request)
 
     # Add simple comment to message2
     simple_comment_request = CommentCreateRequest(
         content="Simple comment", message_id=message2.id
     )
-    CommentService.create_comment(test_user.id, simple_comment_request)
+    CommentService.create_comment(user_id, simple_comment_request)
 
     # List messages
     list_request = MessageListRequest(page_index=1, page_size=10)

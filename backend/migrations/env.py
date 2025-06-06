@@ -39,6 +39,17 @@ target_metadata = Base.metadata
 # ... etc.
 
 
+def get_database_url():
+    """Get database URL with environment variable override support."""
+    # Check for environment variable override (used for test database)
+    env_url = os.environ.get('DATABASE_URL')
+    if env_url:
+        return env_url
+    
+    # Use settings database URL
+    return settings.get_database_url()
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -51,7 +62,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = settings.database_url
+    url = get_database_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -70,9 +81,9 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Override the config with our settings
+    # Override the config with our database URL
     configuration = config.get_section(config.config_ini_section)
-    configuration['sqlalchemy.url'] = settings.database_url
+    configuration['sqlalchemy.url'] = get_database_url()
     
     connectable = engine_from_config(
         configuration,

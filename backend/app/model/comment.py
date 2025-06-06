@@ -1,12 +1,9 @@
 import uuid
 from datetime import UTC, datetime
-from typing import Any, Optional
 
-from pydantic import BaseModel
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
 
-from app.common.database import Base, get_db_session
+from app.common.database import Base
 
 
 class Comment(Base):
@@ -43,57 +40,3 @@ class Comment(Base):
     def __repr__(self) -> str:
         """String representation of Comment."""
         return f"<Comment {self.id}: {self.content[:50]}...>"
-
-    @classmethod
-    def create_comment(
-        cls, content: str, author_id: str, message_id: str, parent_id: str | None = None
-    ) -> "Comment":
-        """Create a new comment."""
-        db_session = get_db_session()
-        comment = cls(
-            content=content,
-            message_id=message_id,
-            parent_id=parent_id,
-            author_id=author_id,
-        )
-
-        db_session.add(comment)
-        db_session.flush()  # Get the ID
-        db_session.commit()
-        return comment
-
-    @staticmethod
-    def find_by_id(comment_id: str) -> Optional["Comment"]:
-        """Find comment by ID."""
-        db_session = get_db_session()
-        return db_session.query(Comment).filter(Comment.id == comment_id).first()
-
-    @staticmethod
-    def find_all_by_message_id(
-        message_id: str,
-        parent_id: str | None = None,
-    ) -> list["Comment"]:
-        """Get comments for a specific message."""
-        db_session = get_db_session()
-        query = db_session.query(Comment).filter(
-            Comment.message_id == message_id,
-            Comment.deleted_at.is_(None),
-        )
-
-        if parent_id:
-            query = query.filter(Comment.parent_id == parent_id)
-        else:
-            query = query.filter(Comment.parent_id.is_(None))
-
-        query = query.order_by(Comment.created_at.desc())
-        return query.all()
-
-    @staticmethod
-    def find_all_comments_by_message_id(message_id: str) -> list["Comment"]:
-        """Get ALL comments for a specific message (including nested ones)."""
-        db_session = get_db_session()
-        query = db_session.query(Comment).filter(
-            Comment.message_id == message_id,
-            Comment.deleted_at.is_(None),
-        )
-        return query.all()

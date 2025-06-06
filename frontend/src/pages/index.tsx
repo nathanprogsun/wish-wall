@@ -35,8 +35,8 @@ export default function Home({ initialMessages }: HomeProps) {
     <AuthProvider>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
         <Head>
-          <title>许愿墙 - 心愿成真的地方</title>
-          <meta name="description" content="在这里许下你的心愿：发财、脱单、旅行、学业、健康...让美好的愿望照进现实" />
+          <title>Wish Wall - Where Dreams Come True</title>
+          <meta name="description" content="Share your wishes here: wealth, love, travel, education, health... Let beautiful dreams become reality" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.ico" />
         </Head>
@@ -49,24 +49,24 @@ export default function Home({ initialMessages }: HomeProps) {
             <div className="space-y-6 text-center">
               <div className="space-y-4">
                 <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
-                  ✨ 许愿墙 ✨
+                  ✨ Wish Wall ✨
                 </h1>
                 <p className="mx-auto max-w-2xl text-xl leading-relaxed text-gray-700">
-                  在这里许下你的美好心愿，愿望会随着星光传递到宇宙的每一个角落
+                  Make your beautiful wishes here, and let them travel to every corner of the universe with starlight
                 </p>
               </div>
               
               {/* Wish Categories */}
               <div className="flex flex-wrap gap-3 justify-center mx-auto max-w-3xl">
                 {[
-                  { text: '💰 发财', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-                  { text: '💕 脱单', color: 'bg-pink-100 text-pink-800 border-pink-200' },
-                  { text: '✈️ 旅行', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-                  { text: '📚 学业', color: 'bg-green-100 text-green-800 border-green-200' },
-                  { text: '🌟 健康', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-                  { text: '🏠 安居', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-                  { text: '👨‍👩‍👧‍👦 家庭', color: 'bg-red-100 text-red-800 border-red-200' },
-                  { text: '🎯 事业', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+                  { text: '💰 Wealth', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+                  { text: '💕 Love', color: 'bg-pink-100 text-pink-800 border-pink-200' },
+                  { text: '✈️ Travel', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+                  { text: '📚 Education', color: 'bg-green-100 text-green-800 border-green-200' },
+                  { text: '🌟 Health', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+                  { text: '🏠 Home', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+                  { text: '👨‍👩‍👧‍👦 Family', color: 'bg-red-100 text-red-800 border-red-200' },
+                  { text: '🎯 Career', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
                 ].map((category) => (
                   <span
                     key={category.text}
@@ -78,7 +78,7 @@ export default function Home({ initialMessages }: HomeProps) {
               </div>
               
               <p className="text-sm text-gray-600">
-                🌙 每一个心愿都值得被聆听，每一份期待都值得被呵护
+                🌙 Every wish deserves to be heard, every hope deserves to be cherished
               </p>
             </div>
 
@@ -87,10 +87,10 @@ export default function Home({ initialMessages }: HomeProps) {
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="mb-2 text-2xl font-bold text-gray-800">
-                  🎋 愿望树
+                  🎋 Wish Tree
                 </h2>
                 <p className="text-gray-600">
-                  共收集了 <span className="font-semibold text-purple-600">{messages.length}</span> 个美好心愿
+                  Collected <span className="font-semibold text-purple-600">{messages.length}</span> beautiful wishes
                 </p>
               </div>
               

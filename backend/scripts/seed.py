@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Wish Wall Seed Script - 许愿墙种子数据生成脚本
+Wish Wall Seed Script
 
 Seed script to populate the database with wish wall sample data.
 Creates users, wishes (messages), and deeply nested comments for testing.
 
 Features:
 - Creates sample users
-- Creates various wishes (发财、脱单、旅行、学业、健康)
+- Creates various wishes (wealth, love, travel, education, health)
 - Creates deeply nested comments (up to 20 levels)
 - Creates regular supportive comments
 - Includes emoji and warm interactions
@@ -33,13 +33,37 @@ logger = get_logger(__name__)
 
 
 def init_db():
-    """Initialize database connection and create tables."""
-    database_url = settings.database_url
-    init_database(database_url)
-
-    # Create tables if they don't exist
-    Base.metadata.create_all(bind=get_engine())
-    logger.info("✅ Database initialized")
+    """Initialize database connection and ensure migrations are up to date."""
+    # Initialize database connection
+    from app.common.database import init_database
+    init_database()
+    
+    # Run Alembic upgrade to ensure database is up to date
+    import subprocess
+    
+    try:
+        logger.info("🔧 Running Alembic upgrade to ensure database is up to date...")
+        result = subprocess.run(
+            ["alembic", "upgrade", "head"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        if result.stdout:
+            logger.debug(result.stdout.strip())
+        logger.info("✅ Database schema is up to date")
+        
+    except subprocess.CalledProcessError as e:
+        logger.error(f"❌ Failed to upgrade database: {e}")
+        if e.stdout:
+            logger.error(f"STDOUT: {e.stdout}")
+        if e.stderr:
+            logger.error(f"STDERR: {e.stderr}")
+        raise RuntimeError("Database migration failed")
+    except FileNotFoundError:
+        logger.error("❌ Alembic not found. Please install alembic or check your environment.")
+        raise
 
 
 def create_sample_users():
@@ -47,36 +71,52 @@ def create_sample_users():
     logger.info("👥 Creating sample users...")
 
     users_data = [
-        {"username": "admin", "email": "admin@example.com", "password": "admin123"},
-        {"username": "alice", "email": "alice@example.com", "password": "alice123"},
-        {"username": "bob", "email": "bob@example.com", "password": "bob123"},
-        {
-            "username": "charlie",
-            "email": "charlie@example.com",
-            "password": "charlie123",
-        },
-        {"username": "diana", "email": "diana@example.com", "password": "diana123"},
+        {"username": "admin", "email": "admin@example.com", "password": "Admin123!"},
+        {"username": "alice", "email": "alice@example.com", "password": "Alice123!"},
+        {"username": "bob", "email": "bob@example.com", "password": "Bob123!"},
+        {"username": "charlie", "email": "charlie@example.com", "password": "Charlie123!"},
+        {"username": "diana", "email": "diana@example.com", "password": "Diana123!"},
     ]
 
     users = []
-    for user_data in users_data:
-        try:
-            user = User.create_user(**user_data)
-            users.append(user)
-            logger.info(f"  ✅ Created user: {user.username}")
-        except Exception as e:
-            logger.warning(f"  ⚠️  User {user_data['username']} may already exist: {e}")
-            # Try to find existing user
-            from app.common.database import get_db_session
+    from app.common.database import get_db_session
 
-            db_session = get_db_session()
-            existing_user = (
-                db_session.query(User)
-                .filter(User.username == user_data["username"])
-                .first()
-            )
-            if existing_user:
-                users.append(existing_user)
+    with get_db_session() as db_session:
+        for user_data in users_data:
+            try:
+                # Check if user already exists
+                existing_user = (
+                    db_session.query(User)
+                    .filter(User.username == user_data["username"])
+                    .first()
+                )
+                
+                if existing_user:
+                    users.append(existing_user)
+                    logger.info(f"  ⚠️  User {user_data['username']} already exists, using existing user")
+                else:
+                    # Create new user using the User constructor
+                    user = User(
+                        username=user_data["username"],
+                        email=user_data["email"],
+                        password=user_data["password"]
+                    )
+                    db_session.add(user)
+                    db_session.flush()  # Get the ID
+                    users.append(user)
+                    logger.info(f"  ✅ Created user: {user.username}")
+                    
+            except Exception as e:
+                logger.error(f"  ❌ Failed to create user {user_data['username']}: {e}")
+                # Try to find existing user as fallback
+                existing_user = (
+                    db_session.query(User)
+                    .filter(User.username == user_data["username"])
+                    .first()
+                )
+                if existing_user:
+                    users.append(existing_user)
+                    logger.info(f"  🔄 Using existing user: {user_data['username']}")
 
     logger.info(f"✅ Created/found {len(users)} users")
     return users
@@ -88,83 +128,92 @@ def create_sample_messages(users):
 
     messages_data = [
         {
-            "content": "🏆 我要发大财！希望今年投资顺利，财源滚滚来！💰💰💰",
+            "content": "🏆 I wish to achieve financial success! Hope my investments do well this year! 💰💰💰",
             "author": users[0],  # admin
         },
         {
-            "content": "💕 我要找个温柔善良的女朋友，希望能遇到那个对的人～",
+            "content": "💕 I wish to find a kind and loving partner, hoping to meet the right person soon!",
             "author": users[1],  # alice
         },
         {
-            "content": "✈️ 我要去环游世界！特别想去日本看樱花、去瑞士看雪山、去马尔代夫看海！",
+            "content": "✈️ I want to travel around the world! Especially to see cherry blossoms in Japan, mountains in Switzerland, and beaches in Maldives!",
             "author": users[2],  # bob
         },
         {
-            "content": "📚 希望能顺利通过考试，拿到心仪大学的录取通知书！学业进步！",
+            "content": "📚 I hope to pass my exams and get accepted to my dream university! Academic success!",
             "author": users[3],  # charlie
         },
         {
-            "content": "🌈 愿家人身体健康，工作顺利，每天都开开心心的！",
+            "content": "🌈 I wish for my family's health and happiness, and for everyone to have a smooth career!",
             "author": users[4],  # diana
         },
     ]
 
     messages = []
-    for msg_data in messages_data:
-        message = Message.create_message(
-            content=msg_data["content"], author_id=msg_data["author"].id
-        )
-        messages.append(message)
-        logger.info(
-            f"  ✨ Created wish by {msg_data['author'].username}: '{message.content[:50]}...'"
-        )
+    from app.common.database import get_db_session
+
+    with get_db_session() as db_session:
+        for msg_data in messages_data:
+            try:
+                message = Message(
+                    content=msg_data["content"], 
+                    author_id=msg_data["author"].id
+                )
+                db_session.add(message)
+                db_session.flush()  # Get the ID
+                messages.append(message)
+                logger.info(
+                    f"  ✨ Created wish by {msg_data['author'].username}: '{message.content[:50]}...'"
+                )
+            except Exception as e:
+                logger.error(f"  ❌ Failed to create message: {e}")
 
     logger.info(f"🌟 Created {len(messages)} wishes")
     return messages
 
 
-def create_deep_nested_comments(message, users, max_depth=20):
-    """Create deeply nested comments (20 levels) for a message."""
+def create_deep_nested_comments_in_session(db_session, message, users, max_depth=20):
+    """Create deeply nested comments (20 levels) for a message within an existing session."""
     logger.info(
         f"💬 Creating 20-level nested comments for wish: '{message.content[:50]}...'"
     )
 
     comment_templates = [
-        "加油！{topic}一定会实现的！💪",
-        "我也有同样的愿望！{topic}真的太重要了～",
-        "祝福你早日实现{topic}的梦想！🙏",
-        "哇，{topic}听起来就很棒！",
-        "我觉得{topic}需要这样努力...",
-        "支持！{topic}是很多人的梦想呢",
-        "想到{topic}就很激动！",
-        "关于{topic}，我想分享一些经验...",
-        "你的{topic}愿望让我很感动",
-        "我也在为{topic}而努力！",
-        "希望我们都能实现{topic}！",
-        "为{topic}点赞！👍",
-        "相信{topic}一定会成功的！",
-        "加油加油！{topic}值得拥有！",
-        "我的朋友也有{topic}的愿望",
-        "关于{topic}，我有个建议...",
-        "真心祝福{topic}早日实现！",
-        "你的{topic}想法很棒！",
-        "一起为{topic}努力吧！",
-        "愿{topic}的美好都降临到你身上✨",
+        "Good luck! {topic} will definitely come true! 💪",
+        "I have the same wish! {topic} is so important!",
+        "Blessings for your {topic} dream to come true! 🙏",
+        "Wow, {topic} sounds amazing!",
+        "I think {topic} requires this kind of effort...",
+        "Support! {topic} is many people's dream",
+        "Thinking about {topic} makes me excited!",
+        "About {topic}, I want to share some experience...",
+        "Your {topic} wish really touches me",
+        "I'm also working towards {topic}!",
+        "Hope we can all achieve {topic}!",
+        "Thumbs up for {topic}! 👍",
+        "Believe {topic} will definitely succeed!",
+        "Keep going! {topic} is worth having!",
+        "My friend also has a {topic} wish",
+        "About {topic}, I have a suggestion...",
+        "Sincere blessings for {topic} to come true soon!",
+        "Your {topic} idea is great!",
+        "Let's work together for {topic}!",
+        "May all the beauty of {topic} come to you ✨",
     ]
 
     # Extract wish topic from message content
-    if "发大财" in message.content:
-        topic = "发财"
-    elif "女朋友" in message.content or "男朋友" in message.content:
-        topic = "脱单"
-    elif "旅游" in message.content or "环游" in message.content:
-        topic = "旅行"
-    elif "考试" in message.content or "学业" in message.content:
-        topic = "学业"
-    elif "健康" in message.content:
-        topic = "健康"
+    if "financial" in message.content.lower() or "money" in message.content.lower():
+        topic = "wealth"
+    elif "partner" in message.content.lower() or "love" in message.content.lower():
+        topic = "love"
+    elif "travel" in message.content.lower() or "world" in message.content.lower():
+        topic = "travel"
+    elif "exam" in message.content.lower() or "university" in message.content.lower():
+        topic = "education"
+    elif "health" in message.content.lower():
+        topic = "health"
     else:
-        topic = "愿望"
+        topic = "wish"
 
     # Create root comments
     root_comments = []
@@ -172,9 +221,13 @@ def create_deep_nested_comments(message, users, max_depth=20):
         user = users[i % len(users)]
         content = comment_templates[i].format(topic=topic)
 
-        comment = Comment.create_comment(
-            content=content, author_id=user.id, message_id=message.id
+        comment = Comment(
+            content=content, 
+            author_id=user.id, 
+            message_id=message.id
         )
+        db_session.add(comment)
+        db_session.flush()  # Get the ID
         root_comments.append(comment)
         logger.info(f"  📌 Root comment {i + 1}: '{content[:40]}...'")
 
@@ -190,13 +243,14 @@ def create_deep_nested_comments(message, users, max_depth=20):
         content = comment_templates[level % len(comment_templates)].format(topic=topic)
         content += f" (Level {level})"
 
-        nested_comment = Comment.create_comment(
+        nested_comment = Comment(
             content=content,
             author_id=user.id,
             message_id=message.id,
             parent_id=current_parent.id,
         )
-
+        db_session.add(nested_comment)
+        db_session.flush()  # Get the ID
         nested_comments.append(nested_comment)
         current_parent = nested_comment
 
@@ -213,30 +267,35 @@ def create_deep_nested_comments(message, users, max_depth=20):
     if len(nested_comments) > 5:
         parent_for_branch = nested_comments[5]
         branch_comments = [
-            f"我觉得实现{topic}还需要这样...",
-            f"关于{topic}，我有个不同的想法！",
+            f"I think achieving {topic} also requires this approach...",
+            f"About {topic}, I have a different perspective!",
         ]
         for i in range(2):  # 2 branches
             user = users[(i + 2) % len(users)]
             content = branch_comments[i]
 
-            Comment.create_comment(
+            branch_comment = Comment(
                 content=content,
                 author_id=user.id,
                 message_id=message.id,
                 parent_id=parent_for_branch.id,
             )
+            db_session.add(branch_comment)
             logger.info(f"    🌿 Branch {i + 1}: '{content}'")
 
     # Add some replies to other root comments
-    root_replies = [f"我也想{topic}！一起努力！", f"{topic}真的很棒，支持你！"]
+    root_replies = [f"I also want {topic}! Let's work together!", f"{topic} is really great, I support you!"]
     for i, root in enumerate(root_comments[1:], 1):
         user = users[(i + 1) % len(users)]
         content = root_replies[(i - 1) % len(root_replies)]
 
-        Comment.create_comment(
-            content=content, author_id=user.id, message_id=message.id, parent_id=root.id
+        reply_comment = Comment(
+            content=content, 
+            author_id=user.id, 
+            message_id=message.id, 
+            parent_id=root.id
         )
+        db_session.add(reply_comment)
         logger.info(f"  💬 Reply to root {i + 1}: '{content}'")
 
     total_comments = 3 + max_depth + 2 + 2  # roots + deep + branches + replies
@@ -247,43 +306,48 @@ def create_deep_nested_comments(message, users, max_depth=20):
     return nested_comments
 
 
-def create_regular_comments(message, users):
-    """Create regular (non-deeply nested) comments for a message."""
+def create_regular_comments_in_session(db_session, message, users):
+    """Create regular (non-deeply nested) comments for a message within an existing session."""
     logger.info(f"💬 Creating regular comments for wish: '{message.content[:50]}...'")
 
     comments_data = [
-        "太棒了！我也为你加油！希望你的愿望成真！🌟",
-        "这个愿望很棒呢～我相信你一定可以的！💪",
-        "哇，看到你的愿望我也很感动，一起努力吧！",
-        "加油加油！我觉得你的想法很棒！",
-        "祝福祝福！希望好运一直伴随着你！🍀",
+        "Fantastic! I'm cheering for you too! Hope your wish comes true! 🌟",
+        "This wish is wonderful! I believe you can definitely do it! 💪",
+        "Wow, seeing your wish really touches me, let's work together!",
+        "Keep going! I think your idea is amazing!",
+        "Blessings! Hope good luck always accompanies you! 🍀",
     ]
 
     comments = []
     for i, content in enumerate(comments_data):
         user = users[i % len(users)]
-        comment = Comment.create_comment(
-            content=content, author_id=user.id, message_id=message.id
+        comment = Comment(
+            content=content, 
+            author_id=user.id, 
+            message_id=message.id
         )
+        db_session.add(comment)
+        db_session.flush()  # Get the ID
         comments.append(comment)
 
         # Add some replies
         if i < 2:  # Add replies to first 2 comments
             reply_templates = [
-                "谢谢你的祝福！💕",
-                "你的话让我很温暖～",
-                "一起加油呀！✊",
-                "真的很感谢！",
-                "我们都会实现愿望的！",
+                "Thank you for your blessing! 💕",
+                "Your words make me feel so warm!",
+                "Let's work together! ✊",
+                "Really appreciate it!",
+                "We will all achieve our wishes!",
             ]
             reply_content = reply_templates[i % len(reply_templates)]
             reply_user = users[(i + 1) % len(users)]
-            Comment.create_comment(
+            reply_comment = Comment(
                 content=reply_content,
                 author_id=reply_user.id,
                 message_id=message.id,
                 parent_id=comment.id,
             )
+            db_session.add(reply_comment)
 
     logger.info(f"✨ Created {len(comments_data) + 2} regular comments")
     return comments
@@ -298,25 +362,113 @@ def generate_seed_data():
     # Initialize database
     init_db()
 
-    # Create sample data
-    users = create_sample_users()
-    messages = create_sample_messages(users)
+    from app.common.database import get_db_session
 
-    # Create deeply nested comments for the first message
-    logger.info("\n" + "=" * 60)
-    logger.info("🏗️  CREATING DEEP NESTED COMMENT STRUCTURE")
-    logger.info("=" * 60)
+    # Create all data within a single session context to avoid detached instance issues
+    with get_db_session() as db_session:
+        # Create sample users
+        logger.info("👥 Creating sample users...")
+        users_data = [
+            {"username": "admin", "email": "admin@example.com", "password": "Admin123!"},
+            {"username": "alice", "email": "alice@example.com", "password": "Alice123!"},
+            {"username": "bob", "email": "bob@example.com", "password": "Bob123!"},
+            {"username": "charlie", "email": "charlie@example.com", "password": "Charlie123!"},
+            {"username": "diana", "email": "diana@example.com", "password": "Diana123!"},
+        ]
 
-    deep_comment_message = messages[0]
-    create_deep_nested_comments(deep_comment_message, users, max_depth=20)
+        users = []
+        for user_data in users_data:
+            try:
+                # Check if user already exists
+                existing_user = (
+                    db_session.query(User)
+                    .filter(User.username == user_data["username"])
+                    .first()
+                )
+                
+                if existing_user:
+                    users.append(existing_user)
+                    logger.info(f"  ⚠️  User {user_data['username']} already exists, using existing user")
+                else:
+                    # Create new user
+                    user = User(
+                        username=user_data["username"],
+                        email=user_data["email"],
+                        password=user_data["password"]
+                    )
+                    db_session.add(user)
+                    db_session.flush()  # Get the ID
+                    users.append(user)
+                    logger.info(f"  ✅ Created user: {user.username}")
+                    
+            except Exception as e:
+                logger.error(f"  ❌ Failed to create user {user_data['username']}: {e}")
 
-    # Create regular comments for other messages
-    logger.info("\n" + "=" * 60)
-    logger.info("🏗️  CREATING REGULAR WISH COMMENTS")
-    logger.info("=" * 60)
+        logger.info(f"✅ Created/found {len(users)} users")
 
-    for message in messages[1:]:
-        create_regular_comments(message, users)
+        # Create sample messages
+        logger.info("🌟 Creating sample wishes...")
+        messages_data = [
+            {
+                "content": "🏆 I wish to achieve financial success! Hope my investments do well this year! 💰💰💰",
+                "author_index": 0,  # admin
+            },
+            {
+                "content": "💕 I wish to find a kind and loving partner, hoping to meet the right person soon!",
+                "author_index": 1,  # alice
+            },
+            {
+                "content": "✈️ I want to travel around the world! Especially to see cherry blossoms in Japan, mountains in Switzerland, and beaches in Maldives!",
+                "author_index": 2,  # bob
+            },
+            {
+                "content": "📚 I hope to pass my exams and get accepted to my dream university! Academic success!",
+                "author_index": 3,  # charlie
+            },
+            {
+                "content": "🌈 I wish for my family's health and happiness, and for everyone to have a smooth career!",
+                "author_index": 4,  # diana
+            },
+        ]
+
+        messages = []
+        for msg_data in messages_data:
+            try:
+                author = users[msg_data["author_index"]]
+                message = Message(
+                    content=msg_data["content"], 
+                    author_id=author.id
+                )
+                db_session.add(message)
+                db_session.flush()  # Get the ID
+                messages.append(message)
+                logger.info(
+                    f"  ✨ Created wish by {author.username}: '{message.content[:50]}...'"
+                )
+            except Exception as e:
+                logger.error(f"  ❌ Failed to create message: {e}")
+
+        logger.info(f"🌟 Created {len(messages)} wishes")
+
+        if not messages:
+            logger.error("❌ No messages created, cannot continue with comments")
+            return
+
+        # Create deeply nested comments for the first message
+        logger.info("\n" + "=" * 60)
+        logger.info("🏗️  CREATING DEEP NESTED COMMENT STRUCTURE")
+        logger.info("=" * 60)
+
+        deep_comment_message = messages[0]
+        create_deep_nested_comments_in_session(db_session, deep_comment_message, users, max_depth=20)
+
+        # Create regular comments for other messages
+        logger.info("\n" + "=" * 60)
+        logger.info("🏗️  CREATING REGULAR WISH COMMENTS")
+        logger.info("=" * 60)
+
+        for message in messages[1:]:
+            create_regular_comments_in_session(db_session, message, users)
 
     total_time = time.time() - start_time
 

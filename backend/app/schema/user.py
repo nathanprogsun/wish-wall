@@ -2,8 +2,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from app.model.user import User
-
 
 class UserRegisterRequest(BaseModel):
     username: str = Field(min_length=5, max_length=20, description="Username")
@@ -15,7 +13,7 @@ class UserRegisterRequest(BaseModel):
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str) -> str:
-        """Validate username format and uniqueness."""
+        """Validate username format only. Uniqueness is checked in service layer."""
         # Check length (5-20)
         if not 5 <= len(v) <= 20:
             raise ValueError("Username must be between 5 and 20 characters")
@@ -24,17 +22,12 @@ class UserRegisterRequest(BaseModel):
         if not v.isalnum():
             raise ValueError("Username can only contain letters and numbers")
 
-        # Check uniqueness
-        if User.find_by_username(v):
-            raise ValueError("Username already exists")
         return v.strip()
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, v: EmailStr) -> EmailStr:
-        """Validate email uniqueness."""
-        if User.find_by_email(str(v)):
-            raise ValueError("Email already exists")
+        """Validate email format only. Uniqueness is checked in service layer."""
         return v
 
     @field_validator("password")
@@ -85,7 +78,7 @@ class UserResponse(BaseModel):
     updated_at: datetime = Field(description="Last update time")
 
     @classmethod
-    def from_model(cls, user: User) -> "UserResponse":
+    def from_model(cls, user) -> "UserResponse":
         """Create UserResponse from User model."""
         return cls(
             id=user.id,

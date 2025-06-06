@@ -64,7 +64,7 @@ def main():
                         print(
                             f'{indent}└── "{comment.content[:30]}..." ({len(comment.replies)} replies)'
                         )
-                        for reply in comment.replies[:2]:  # 只显示前2个回复
+                        for reply in comment.replies[:2]:  # Show only first 2 replies
                             show_structure(reply, level + 1, max_show)
                         if len(comment.replies) > 2:
                             print(

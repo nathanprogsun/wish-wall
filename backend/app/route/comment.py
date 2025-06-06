@@ -40,10 +40,10 @@ def create_comment(current_user):
               example: "comment-uuid-here"
             content:
               type: string
-              minLength: 3
-              maxLength: 200
-              example: "希望你的愿望早日实现！"
-              description: Comment content (3-200 characters)
+              minLength: 1
+              maxLength: 500
+              example: "Hope your wish comes true soon!"
+              description: Comment content (1-500 characters)
     responses:
       201:
         description: Comment created successfully
@@ -61,7 +61,7 @@ def create_comment(current_user):
                   example: "comment-uuid-here"
                 content:
                   type: string
-                  example: "希望你的愿望早日实现！"
+                  example: "Hope your wish comes true soon!"
                 message_id:
                   type: string
                   example: "msg-uuid-here"
@@ -139,10 +139,10 @@ def update_comment(current_user, comment_id):
           properties:
             content:
               type: string
-              minLength: 3
-              maxLength: 200
-              example: "更新后的祝福内容"
-              description: Updated comment content (3-200 characters)
+              minLength: 1
+              maxLength: 500
+              example: "Updated wish content"
+              description: Updated comment content (1-500 characters)
     responses:
       200:
         description: Comment updated successfully
@@ -160,7 +160,7 @@ def update_comment(current_user, comment_id):
                   example: "comment-uuid-here"
                 content:
                   type: string
-                  example: "更新后的祝福内容"
+                  example: "Updated wish content"
                 message_id:
                   type: string
                   example: "msg-uuid-here"

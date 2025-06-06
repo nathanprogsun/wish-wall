@@ -1,162 +1,330 @@
-# Wish Wall - 许愿墙
+# Wish Wall Backend
 
-一个美好的许愿墙应用，让梦想成真。
+A RESTful API backend service for the wish wall application built with Flask and JWT authentication.
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
-wish-wall/
-├── backend/                # 后端服务 (Flask + SQLAlchemy)
-│   ├── app/               # 应用核心代码
-│   │   ├── model/         # 数据模型
-│   │   ├── route/         # API路由
-│   │   ├── service/       # 业务逻辑
-│   │   ├── schema/        # 数据验证模式
-│   │   ├── common/        # 通用模块
-│   │   ├── util/          # 工具函数
-│   │   └── data/          # 数据处理
-│   ├── migrations/        # 数据库迁移文件
-│   ├── scripts/           # 辅助脚本
-│   ├── tests/             # 测试文件
-│   ├── pyproject.toml     # Python项目配置
-│   ├── poetry.lock        # 依赖锁定文件
-│   ├── Makefile          # 构建和管理命令
-│   └── alembic.ini       # 数据库迁移配置
-├── frontend/              # 前端应用 (Next.js + React)
-│   ├── src/              # 源代码
-│   │   ├── components/    # React组件
-│   │   ├── pages/        # 页面组件
-│   │   ├── lib/          # 库文件
-│   │   ├── utils/        # 工具函数
-│   │   ├── contexts/     # React上下文
-│   │   └── styles/       # 样式文件
-│   ├── public/           # 静态资源
-│   ├── package.json      # Node.js项目配置
-│   └── next.config.js    # Next.js配置
-├── scripts/              # 项目级脚本
-├── README.md            # 项目说明
-└── .gitignore           # Git忽略文件配置
+backend/                   # Backend service (Flask + SQLAlchemy)
+├── app/                  # Core application code
+│   ├── model/            # Data models
+│   ├── route/            # API routes
+│   ├── service/          # Business logic
+│   ├── schema/           # Data validation schemas
+│   ├── common/           # Common modules
+│   ├── util/             # Utility functions
+│   └── data/             # Data processing
+├── migrations/           # Database migration files (Alembic)
+├── scripts/              # Helper scripts
+├── tests/                # Test files
+├── pyproject.toml        # Python project configuration
+├── poetry.lock           # Dependency lock file
+├── docker-compose.yml    # Docker services configuration
+├── Dockerfile            # Docker image configuration
+├── alembic.ini           # Alembic configuration
+├── Makefile              # Development commands
+└── README.md             # This file
 ```
 
-## 🚀 快速启动
+## 🚀 Quick Start
 
-### 前置要求
+### Prerequisites
 
 - Python 3.12+
-- Poetry (Python包管理器)
-- Node.js 18+
-- npm 或 yarn
+- Poetry for dependency management
+- Docker & Docker Compose
+- MySQL 8.0+
 
-### 首次使用（推荐）
-
-```bash
-# 初始化开发环境
-./scripts/setup.sh
-
-# 启动前后端服务
-make dev
-```
-
-### 一键启动
+### 1. Clone and Setup
 
 ```bash
-# 启动前后端服务
-make dev
-
-# 或者使用脚本
-./scripts/start.sh
+git clone <repository-url>
+cd wish-wall/backend
 ```
 
-### 分别启动
-
-#### 后端启动
+### 2. Install Dependencies
 
 ```bash
-cd backend
-poetry install          # 安装依赖
-poetry run python -m app # 启动后端服务
+make install          # Production dependencies
+make dev-install      # Development dependencies
 ```
 
-后端将在 `http://localhost:8000` 启动
-
-#### 前端启动
+### 3. Start Services
 
 ```bash
-cd frontend
-npm install    # 安装依赖
-npm run dev    # 启动开发服务器
+# Start all services (database + API)
+make docker-up
+
+# Or start database only
+make test-db
 ```
 
-前端将在 `http://localhost:3000` 启动
-
-## 🛠️ 开发命令
-
-### 后端命令 (在 backend/ 目录下)
+### 4. Run Database Migrations
 
 ```bash
-make help                # 查看所有可用命令
+# Check current migration status
+make migrations-current
 
-# 代码质量
-make format             # 格式化代码
-make lint               # 代码检查
-make quality            # 运行所有质量检查
+# Apply all pending migrations
+make migrations-upgrade
 
-# 测试
-make test               # 运行所有测试
-make test-unit          # 运行单元测试
-make test-api           # 运行API测试
-
-# 数据库
-make migrations-generate MSG='描述'  # 生成迁移
-make migrations-upgrade              # 应用迁移
-make migrations-downgrade            # 回滚迁移
-make seed                           # 生成种子数据
-
-# 开发
-make dev                # 启动开发服务器
+# View migration history
+make migrations-history
 ```
 
-### 前端命令 (在 frontend/ 目录下)
+### 5. Create Sample Data
 
 ```bash
-npm run dev      # 启动开发服务器
-npm run build    # 构建生产版本
-npm run start    # 启动生产服务器
-npm run lint     # 代码检查
+# Generate seed data (users, wishes, nested comments)
+make seed
 ```
 
-## 🏗️ 技术栈
+### 6. Run Tests
 
-### 后端
-- **框架**: Flask
-- **数据库**: SQLAlchemy ORM
-- **迁移**: Alembic
-- **验证**: Pydantic
-- **测试**: pytest
-- **代码质量**: ruff, mypy
-- **文档**: Flasgger (Swagger)
+```bash
+# Run all tests
+make test
 
-### 前端
-- **框架**: Next.js 15
-- **UI库**: React 18
-- **样式**: Tailwind CSS
-- **组件**: Radix UI
-- **表单**: React Hook Form + Zod
-- **HTTP**: Axios
-- **类型检查**: TypeScript
+# Run specific test types
+make test-unit         # Service layer tests
+make test-api          # API endpoint tests
+```
 
-## 📝 API文档
+## 🛠️ Database Management
 
-后端启动后，访问 `http://localhost:8000/api/docs` 查看Swagger API文档。
+### Migration Commands
 
-## 🔧 配置
+The project uses **Alembic** for database schema management:
 
-### 后端配置
-复制 `backend/.env.example` 到 `backend/.env` 并根据需要修改配置。
+```bash
+# View current migration status
+make migrations-current
 
-### 前端配置
-根据需要修改 `frontend/next.config.js` 和环境变量。
+# Show migration history
+make migrations-history
 
-## 📄 许可证
+# Generate new migration
+make migrations-generate MSG="Add new feature"
 
-本项目采用 MIT 许可证。 
+# Apply migrations
+make migrations-upgrade
+
+# Downgrade database
+make migrations-downgrade REV="-1"  # Go back 1 step
+make migrations-downgrade REV="base"  # Go to initial state
+
+# Reset database (useful for development)
+make migrations-reset
+```
+
+### Test Database
+
+```bash
+# Setup test database with migrations
+poetry run python scripts/migrations.py setup-test
+
+# Reset test database
+poetry run python scripts/migrations.py reset --database-url "mysql://..."
+```
+
+### Advanced Migration Usage
+
+```bash
+# Use migrations script directly
+poetry run python scripts/migrations.py --help
+
+# Examples:
+poetry run python scripts/migrations.py current
+poetry run python scripts/migrations.py generate --message "New feature"
+poetry run python scripts/migrations.py upgrade --revision "head"
+poetry run python scripts/migrations.py downgrade --revision "base"
+poetry run python scripts/migrations.py reset
+```
+
+## 🧪 Testing
+
+```bash
+# Full test suite
+make test
+
+# Specific test categories
+make test-unit         # Unit tests (services)
+make test-api          # Integration tests (API endpoints)
+
+# Test setup
+make test-setup        # Setup test environment
+make test-reset        # Reset test database
+```
+
+## 🔧 Development
+
+### Code Quality
+
+```bash
+make format           # Format code with ruff
+make lint             # Lint code
+make quality          # Run all quality checks
+```
+
+### API Testing
+
+The API is available at `http://localhost:8000` when running via Docker.
+
+```bash
+# Test authentication
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"login":"admin","password":"Admin123!"}' \
+  http://localhost:8000/api/users/login
+
+# View wishes
+curl http://localhost:8000/api/messages/
+
+# Health check
+curl http://localhost:8000/health
+```
+
+## 📝 Environment Configuration
+
+Create `.env` file with:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=your_password
+DB_NAME=wish_wall
+
+# Test Database
+TEST_DB_HOST=localhost
+TEST_DB_PORT=3307
+TEST_DB_USERNAME=root
+TEST_DB_PASSWORD=your_password
+TEST_DB_NAME=wish_wall_test
+
+# JWT Configuration
+JWT_SECRET_KEY=your-secret-key
+JWT_ACCESS_TOKEN_HOURS=24
+JWT_REMEMBER_TOKEN_DAYS=30
+JWT_REFRESH_TOKEN_DAYS=7
+```
+
+## 🐳 Docker Deployment
+
+```bash
+# Build and start all services
+make docker-up
+
+# View logs
+make docker-logs
+
+# Stop services
+make docker-down
+
+# Clean up
+make docker-clean
+```
+
+The application will be available at:
+- API: `http://localhost:8000`
+- Database: `localhost:3306` (main), `localhost:3307` (test)
+
+## 📊 Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **User Management**: Registration, login, profile management
+- **Message System**: Create and manage wish messages
+- **Comment System**: Nested comments with unlimited depth
+- **Database Migrations**: Alembic-managed schema versioning
+- **Testing**: Comprehensive test suite with MySQL integration
+- **Docker Support**: Full containerization with Docker Compose
+- **API Documentation**: RESTful API with proper error handling
+
+## 🔍 Available Commands
+
+Use `make help` to see all available commands:
+
+```bash
+make help
+```
+
+This will show all development, testing, migration, and Docker commands available.
+
+## 🏗️ Architecture
+
+- **Flask**: Web framework
+- **SQLAlchemy**: ORM with MySQL
+- **Alembic**: Database migration management
+- **JWT**: Token-based authentication
+- **Poetry**: Dependency management
+- **Docker**: Containerization
+- **pytest**: Testing framework
+
+## 📝 API Documentation
+
+After starting the backend, visit `http://localhost:8000/api/docs` to view the Swagger API documentation.
+
+## 🔧 Configuration
+
+Copy `.env.example` to `.env` and modify the configuration as needed.
+
+Key environment variables:
+- `DB_HOST`: Database host (default: localhost)
+- `DB_PASSWORD`: Database password
+- `SECRET_KEY`: Flask secret key
+- `JWT_SECRET_KEY`: JWT token secret key
+
+## 🐳 Docker Deployment
+
+The project includes Docker support for easy deployment:
+
+### Services
+- **MySQL Database**: Persistent MySQL 8.0 with automatic initialization
+- **Flask Application**: Containerized backend with automatic migration
+
+### Docker Commands
+```bash
+# Build and start all services
+make docker-up
+
+# View service logs
+make docker-logs
+
+# Stop all services
+make docker-down
+
+# Clean up all Docker resources
+make docker-clean
+```
+
+### Environment Variables
+Docker Compose uses the following key environment variables:
+- Database credentials for MySQL container
+- JWT secrets for authentication
+- Application configuration
+
+## 🧪 Testing
+
+### Run All Tests
+```bash
+make test
+```
+
+### Run Specific Test Types
+```bash
+make test-unit          # Unit tests only
+make test-api           # API tests only
+```
+
+### Test Database Setup
+```bash
+# Start test database
+make test-setup
+
+# Run tests with test database
+make test
+```
+
+## 📄 License
+
+This project is licensed under the MIT License. 

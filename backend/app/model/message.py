@@ -1,6 +1,5 @@
 import uuid
 from datetime import UTC, datetime
-from typing import Any, Optional
 
 from sqlalchemy import (
     Column,
@@ -9,10 +8,8 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.orm import relationship
 
-from app.common.database import Base, get_db_session
-from app.model.comment import Comment
+from app.common.database import Base
 
 
 class Message(Base):
@@ -46,29 +43,3 @@ class Message(Base):
     def __repr__(self) -> str:
         """String representation of Message."""
         return f"<Message {self.content[:50]}...>"
-
-    def get_comment_count(self) -> int:
-        db_session = get_db_session()
-        return db_session.query(Comment).filter(Comment.message_id == self.id).count()
-
-    @classmethod
-    def create_message(
-        cls,
-        content: str,
-        author_id: str,
-    ) -> "Message":
-        db_session = get_db_session()
-        message = cls(
-            content=content,
-            author_id=author_id,
-        )
-
-        db_session.add(message)
-        db_session.commit()
-        return message
-
-    @staticmethod
-    def find_by_id(message_id: str) -> Optional["Message"]:
-        """Find message by ID."""
-        db_session = get_db_session()
-        return db_session.query(Message).filter(Message.id == message_id).first()

@@ -20,15 +20,15 @@ export default function Header({ onOpenAuth }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-purple-100 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 max-w-4xl">
-        <div className="flex items-center justify-between">
+    <header className="sticky top-0 z-50 border-b border-purple-100 shadow-sm backdrop-blur-sm bg-white/80">
+      <div className="container px-4 py-4 mx-auto max-w-4xl">
+        <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              ✨ 许愿墙
+            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+              ✨ Wish Wall
             </h1>
-            <span className="text-sm text-gray-500 hidden sm:block">
-              心愿成真的地方
+            <span className="hidden text-sm text-gray-500 sm:block">
+              Where Dreams Come True
             </span>
           </div>
           
@@ -37,11 +37,11 @@ export default function Header({ onOpenAuth }: HeaderProps) {
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2">
                   <Avatar className="w-8 h-8 border border-purple-200">
-                    <AvatarFallback className="text-xs bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600">
+                    <AvatarFallback className="text-xs text-purple-600 bg-gradient-to-br from-purple-100 to-pink-100">
                       {getUserInitials(user.username)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-gray-700 hidden sm:block">
+                  <span className="hidden text-sm text-gray-700 sm:block">
                     {user.display_name || user.username}
                   </span>
                 </div>
@@ -49,9 +49,9 @@ export default function Header({ onOpenAuth }: HeaderProps) {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300"
+                  className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
                 >
-                  退出
+                  Logout
                 </Button>
               </div>
             ) : (
@@ -62,14 +62,14 @@ export default function Header({ onOpenAuth }: HeaderProps) {
                   onClick={() => onOpenAuth('login')}
                   className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
                 >
-                  登录
+                  Login
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => onOpenAuth('register')}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                  className="text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
-                  注册
+                  Register
                 </Button>
               </div>
             )}

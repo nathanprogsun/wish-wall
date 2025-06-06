@@ -1,216 +1,328 @@
-# Wish Wall - 许愿墙
+# Wish Wall
 
-一个美好的许愿墙应用，让梦想成真。
+A beautiful wish wall application where dreams come true.
+![dashboard](./image.png)
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 wish-wall/
-├── backend/                # 后端服务 (Flask + SQLAlchemy)
-│   ├── app/               # 应用核心代码
-│   │   ├── model/         # 数据模型
-│   │   ├── route/         # API路由
-│   │   ├── service/       # 业务逻辑
-│   │   ├── schema/        # 数据验证模式
-│   │   ├── common/        # 通用模块
-│   │   ├── util/          # 工具函数
-│   │   └── data/          # 数据处理
-│   ├── migrations/        # 数据库迁移文件
-│   ├── scripts/           # 辅助脚本
-│   ├── tests/             # 测试文件
-│   ├── pyproject.toml     # Python项目配置
-│   ├── poetry.lock        # 依赖锁定文件
-│   ├── Makefile          # 构建和管理命令
-│   └── alembic.ini       # 数据库迁移配置
-├── frontend/              # 前端应用 (Next.js + React)
-│   ├── src/              # 源代码
-│   │   ├── components/    # React组件
-│   │   ├── pages/        # 页面组件
-│   │   ├── lib/          # 库文件
-│   │   ├── utils/        # 工具函数
-│   │   ├── contexts/     # React上下文
-│   │   └── styles/       # 样式文件
-│   ├── public/           # 静态资源
-│   ├── package.json      # Node.js项目配置
-│   └── next.config.js    # Next.js配置
-├── Makefile              # 项目级构建和管理命令
-├── README.md            # 项目说明
-└── .gitignore           # Git忽略文件配置
+├── backend/                # Backend service (Flask + SQLAlchemy)
+│   ├── app/               # Core application code
+│   │   ├── model/         # Data models
+│   │   ├── route/         # API routes
+│   │   ├── service/       # Business logic
+│   │   ├── schema/        # Data validation schemas
+│   │   ├── common/        # Common modules
+│   │   ├── util/          # Utility functions
+│   │   └── data/          # Data processing
+│   ├── migrations/        # Database migration files
+│   ├── scripts/           # Helper scripts
+│   ├── tests/             # Test files
+│   ├── pyproject.toml     # Python project configuration
+│   ├── poetry.lock        # Dependency lock file
+│   ├── Makefile          # Build and management commands
+│   └── alembic.ini       # Database migration configuration
+├── frontend/              # Frontend application (Next.js + React)
+│   ├── src/              # Source code
+│   │   ├── components/    # React components
+│   │   ├── pages/        # Page components
+│   │   ├── lib/          # Library files
+│   │   ├── utils/        # Utility functions
+│   │   ├── contexts/     # React contexts
+│   │   └── styles/       # Style files
+│   ├── public/           # Static assets
+│   ├── package.json      # Node.js project configuration
+│   ├── Dockerfile        # Frontend Docker configuration
+│   └── next.config.js    # Next.js configuration
+├── docker-compose.yml    # Docker services configuration
+├── Makefile              # Project-level build and management commands
+├── README.md            # Project documentation
+└── .gitignore           # Git ignore file configuration
 ```
 
-## 🚀 快速启动
+## 🚀 Quick Start
 
-### 前置要求
+You can run this application in two ways:
 
+### Option 1: Docker (Recommended)
+
+#### Prerequisites
+- Docker
+- Docker Compose
+
+#### Steps
+1. **Clone and navigate to the project**
+   ```bash
+   git clone <repository-url>
+   cd wish-wall
+   ```
+
+2. **Start with Docker**
+   ```bash
+   # Build and start all services
+   make docker-up
+   ```
+
+3. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - Database: localhost:3306
+
+4. **View logs (optional)**
+   ```bash
+   make docker-logs
+   ```
+
+5. **Stop services**
+   ```bash
+   make docker-down
+   ```
+
+### Option 2: Local Development
+
+#### Prerequisites
 - Python 3.12+
-- Poetry (Python包管理器)
+- Poetry (Python package manager)
 - Node.js 18+
-- npm 或 yarn
-- SQLite3 (通常系统自带)
+- npm or yarn
+- MySQL 8.0
 
-### 第一次使用（推荐分步操作）
+#### First-time Setup
 
-#### 1. 安装依赖
+1. **Install dependencies**
+   ```bash
+   make install
+   ```
+
+2. **Initialize database**
+   ```bash
+   make db-init
+   make db-seed  # Optional: Generate test data
+   ```
+
+3. **Start services**
+   ```bash
+   make dev  # Starts both backend and frontend
+   ```
+
+#### Daily Development
 
 ```bash
-# 安装前后端依赖
-make install
-```
-
-#### 2. 初始化数据库
-
-```bash
-# 初始化数据库结构
-make db-init
-
-# 生成测试数据（可选）
-make db-seed
-```
-
-#### 3. 启动服务
-
-```bash
-# 一键启动前后端服务（推荐）
+# Start development environment (backend starts 10s first, then frontend)
 make dev
 
-# 或者分别启动
-make backend    # 启动后端服务
-make frontend   # 启动前端服务
-```
-
-### 日常开发
-
-```bash
-# 启动开发环境（后端先启动10秒，再启动前端）
-make dev
-
-# 查看服务状态
+# Check service status
 make status
 
-# 停止所有服务
+# Stop all services
 make stop
 ```
 
-### 单独启动服务
+## 🛠️ Development Commands
 
-#### 后端启动
-
-```bash
-cd backend
-poetry install          # 安装依赖
-make migrations-upgrade  # 运行数据库迁移
-make seed               # 生成种子数据（可选）
-poetry run python -m app # 启动后端服务
-```
-
-后端将在 `http://localhost:8000` 启动
-
-#### 前端启动
+### Project-level Commands (Recommended for use in project root)
 
 ```bash
-cd frontend
-npm install    # 安装依赖
-npm run dev    # 启动开发服务器
+make help                # Show all available commands
+
+# 🚀 Quick Start
+make dev                # Start full-stack services (backend starts 10s first)
+make docker-up          # Start full-stack services with Docker
+
+# 🔧 Individual Services
+make backend            # Start backend development server
+make frontend           # Start frontend development server
+
+# 🐳 Docker Management
+make docker-build       # Build Docker images
+make docker-up          # Start Docker containers
+make docker-down        # Stop Docker containers
+make docker-logs        # View Docker logs
+make docker-clean       # Clean Docker resources
+
+# 📦 Project Management
+make install            # Install all dependencies
+make clean              # Clean cache and temporary files
+make test               # Run all tests
+make lint               # Code linting
+make format             # Format code
+make stop               # Stop all services
+
+# 🗄️ Database Management
+make db-init            # Initialize database
+make db-migrate         # Run database migrations
+make db-seed            # Generate seed data
+
+# 📊 Project Information
+make status             # Check service status
+make logs               # View service logs
 ```
 
-前端将在 `http://localhost:3000` 启动
-
-## 🛠️ 开发命令
-
-### 项目级命令（推荐在项目根目录使用）
+### Backend Commands (in backend/ directory)
 
 ```bash
-make help                # 查看所有可用命令
+make help                # Show all available commands
 
-# 🚀 快速启动
-make dev                # 一键启动全栈服务（后端先启动10秒）
-make backend            # 启动后端开发服务
-make frontend           # 启动前端开发服务
+# Code Quality
+make format             # Format code
+make lint               # Code linting
+make quality            # Run all quality checks
 
-# 📦 项目管理
-make install            # 安装所有依赖
-make clean              # 清理缓存和临时文件
-make test               # 运行所有测试
-make lint               # 代码检查
-make format             # 格式化代码
-make stop               # 停止所有服务
+# Testing
+make test               # Run all tests
+make test-unit          # Run unit tests
+make test-api           # Run API tests
 
-# 🗄️ 数据库管理
-make db-init            # 初始化数据库
-make db-migrate         # 运行数据库迁移
-make db-seed            # 生成种子数据
+# Database
+make migrations-generate MSG='description'  # Generate migration
+make migrations-upgrade                     # Apply migrations
+make migrations-downgrade                   # Rollback migrations
+make seed                                  # Generate seed data
 
-# 📊 项目信息
-make status             # 查看服务状态
-make logs               # 查看服务日志
+# Development
+make dev                # Start development server
 ```
 
-### 后端命令 (在 backend/ 目录下)
+### Frontend Commands (in frontend/ directory)
 
 ```bash
-make help                # 查看所有可用命令
-
-# 代码质量
-make format             # 格式化代码
-make lint               # 代码检查
-make quality            # 运行所有质量检查
-
-# 测试
-make test               # 运行所有测试
-make test-unit          # 运行单元测试
-make test-api           # 运行API测试
-
-# 数据库
-make migrations-generate MSG='描述'  # 生成迁移
-make migrations-upgrade              # 应用迁移
-make migrations-downgrade            # 回滚迁移
-make seed                           # 生成种子数据
-
-# 开发
-make dev                # 启动开发服务器
+npm run dev      # Start development server
+npm run build    # Build production version
+npm run start    # Start production server
+npm run lint     # Code linting
 ```
 
-### 前端命令 (在 frontend/ 目录下)
+## 🏗️ Tech Stack
 
+### Backend
+- **Framework**: Flask
+- **Database**: SQLAlchemy ORM with MySQL
+- **Migrations**: Alembic
+- **Validation**: Pydantic
+- **Testing**: pytest
+- **Code Quality**: ruff, mypy
+- **Documentation**: Flasgger (Swagger)
+- **Authentication**: JWT (JSON Web Tokens)
+
+### Frontend
+- **Framework**: Next.js 15
+- **UI Library**: React 18
+- **Styling**: Tailwind CSS
+- **Components**: Radix UI
+- **Forms**: React Hook Form + Zod
+- **HTTP Client**: Axios
+- **Type Checking**: TypeScript
+- **Authentication**: JWT with refresh tokens
+
+## 📋 Available Endpoints
+
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/logout` - User logout
+
+### Wishes
+- `GET /api/wishes` - Get all wishes
+- `POST /api/wishes` - Create new wish
+- `GET /api/wishes/{id}` - Get specific wish
+- `PUT /api/wishes/{id}` - Update wish
+- `DELETE /api/wishes/{id}` - Delete wish
+
+### Comments
+- `GET /api/wishes/{id}/comments` - Get wish comments
+- `POST /api/wishes/{id}/comments` - Add comment to wish
+
+## 🧪 Testing & Verification
+
+### Test Docker Setup
 ```bash
-npm run dev      # 启动开发服务器
-npm run build    # 构建生产版本
-npm run start    # 启动生产服务器
-npm run lint     # 代码检查
+# Start services
+make docker-up
+
+# Verify all containers are running
+docker-compose ps
+
+# Test frontend
+curl http://localhost:3000
+
+# Test backend API
+curl http://localhost:8000/api/health
+
+# Stop services
+make docker-down
 ```
 
-## 🏗️ 技术栈
+### Test Local Development
+```bash
+# Install dependencies
+make install
 
-### 后端
-- **框架**: Flask
-- **数据库**: SQLAlchemy ORM
-- **迁移**: Alembic
-- **验证**: Pydantic
-- **测试**: pytest
-- **代码质量**: ruff, mypy
-- **文档**: Flasgger (Swagger)
+# Start services
+make dev
 
-### 前端
-- **框架**: Next.js 15
-- **UI库**: React 18
-- **样式**: Tailwind CSS
-- **组件**: Radix UI
-- **表单**: React Hook Form + Zod
-- **HTTP**: Axios
-- **类型检查**: TypeScript
+# In another terminal, check status
+make status
 
-## 📝 API文档
+# Stop services
+make stop
+```
 
-后端启动后，访问 `http://localhost:8000/api/docs` 查看Swagger API文档。
+### Run Tests
+```bash
+# Run all tests
+make test
 
-## 🔧 配置
+# Run linting
+make lint
 
-### 后端配置
-复制 `backend/.env.example` 到 `backend/.env` 并根据需要修改配置。
+# Format code
+make format
+```
 
-### 前端配置
-根据需要修改 `frontend/next.config.js` 和环境变量。
+## 🔧 Environment Variables
 
-## 📄 许可证
+### Backend
+- `DB_HOST` - Database host (default: localhost)
+- `DB_PORT` - Database port (default: 3306)
+- `DB_USERNAME` - Database username
+- `DB_PASSWORD` - Database password
+- `DB_NAME` - Database name
+- `SECRET_KEY` - Flask secret key
+- `JWT_SECRET_KEY` - JWT signing key
 
-本项目采用 MIT 许可证。 
+### Frontend
+- `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:8000/api)
+- `NODE_ENV` - Environment (development/production)
+
+## 📝 Development Notes
+
+### Database Schema
+The application uses the following main entities:
+- **Users**: User accounts with JWT authentication
+- **Wishes**: User wishes with categories (Wealth, Love, Travel, Health, Career, Study, Family)
+- **Comments**: Comments on wishes with blessing functionality
+
+### Authentication Flow
+1. User registers/logs in with credentials
+2. Backend returns JWT access token and optional refresh token
+3. Frontend stores tokens and includes Authorization header in requests
+4. Backend validates JWT on protected routes
+
+### Docker Services
+- **mysql**: MySQL 8.0 database with persistent volume
+- **backend**: Flask application with automatic migrations and seed data
+- **frontend**: Next.js development server with hot reload
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `make test`
+5. Run linting: `make lint`
+6. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License. 

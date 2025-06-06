@@ -4,11 +4,9 @@ Main application entry point with Flasgger API documentation.
 
 import os
 
-from cachelib import FileSystemCache
 from flasgger import Swagger
 from flask import Flask
 from flask_cors import CORS
-from flask_session import Session
 
 from app.common.database import init_database
 from app.common.logger import get_logger, setup_logging
@@ -17,9 +15,6 @@ from app.settings import settings
 setup_logging()
 
 logger = get_logger(__name__)
-
-# Session manager
-session_manager = Session()
 
 
 def create_app() -> Flask:
@@ -36,33 +31,8 @@ def create_app() -> Flask:
     # Load configuration from settings
     app.config.update(settings.to_flask_config())
 
-    # Configure modern Flask-Session with CacheLib
-    session_dir = app.config.get("SESSION_FILE_DIR", "app/data/sessions")
-    os.makedirs(session_dir, exist_ok=True)
-
-    # Use the new CacheLib configuration
-    app.config["SESSION_TYPE"] = "cachelib"
-    app.config["SESSION_CACHELIB"] = FileSystemCache(
-        cache_dir=session_dir,
-        threshold=app.config.get("SESSION_FILE_THRESHOLD", 500),
-        default_timeout=int(
-            app.config.get("PERMANENT_SESSION_LIFETIME", 86400).total_seconds()
-        )
-        if hasattr(app.config.get("PERMANENT_SESSION_LIFETIME", 86400), "total_seconds")
-        else 86400,
-        mode=app.config.get("SESSION_FILE_MODE", 0o600),
-    )
-
-    # Additional session security settings
-    app.config["SESSION_PERMANENT"] = False
-    app.config["SESSION_USE_SIGNER"] = True
-    app.config["SESSION_KEY_PREFIX"] = "session:"
-
     # Initialize database
-    init_database(database_url=str(settings.db_url), echo=settings.debug)
-
-    # Initialize Session
-    session_manager.init_app(app)
+    init_database()
 
     # Configure CORS
     CORS(
@@ -90,7 +60,7 @@ def create_app() -> Flask:
     def health():
         return {
             "status": "healthy",
-            "message": "Comments API is running with Flask Session authentication",
+            "message": "Comments API is running with JWT authentication",
             "version": "0.1.0",
         }, 200
 
@@ -127,7 +97,7 @@ def configure_swagger(app: Flask) -> None:
         "swagger": "2.0",
         "info": {
             "title": "Comments Tree API",
-            "description": "A RESTful API for infinite nested comments system",
+            "description": "A RESTful API for infinite nested comments system with JWT authentication",
             "contact": {
                 "name": "Developer",
                 "email": "dev@example.com",

@@ -3,29 +3,29 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
-import { Message, messagesApi } from '@/lib/api';
+import { messagesApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-interface CreateMessageFormProps {
-  onMessageCreated: (message: Message) => void;
-}
-
 interface MessageFormData {
   content: string;
 }
 
+interface CreateMessageFormProps {
+  onMessageCreated: (message: any) => void;
+}
+
 const wishCategories = [
-  { emoji: '💰', text: '发财', placeholder: '希望财运亨通，事业成功...' },
-  { emoji: '💕', text: '脱单', placeholder: '愿早日遇到那个对的人...' },
-  { emoji: '✈️', text: '旅行', placeholder: '想去看看世界的美好...' },
-  { emoji: '📚', text: '学业', placeholder: '祈愿学业有成，考试顺利...' },
-  { emoji: '🌟', text: '健康', placeholder: '愿身体健康，家人平安...' },
-  { emoji: '🏠', text: '安居', placeholder: '希望有个温馨的家...' },
-  { emoji: '👨‍👩‍👧‍👦', text: '家庭', placeholder: '愿家庭和睦，幸福美满...' },
-  { emoji: '🎯', text: '事业', placeholder: '希望工作顺利，升职加薪...' },
+  { emoji: '💰', text: 'Wealth', placeholder: 'Hope for prosperity and career success...' },
+  { emoji: '💕', text: 'Love', placeholder: 'Hope to find that special someone...' },
+  { emoji: '✈️', text: 'Travel', placeholder: 'Want to see the beauty of the world...' },
+  { emoji: '📚', text: 'Education', placeholder: 'Pray for academic success and passing exams...' },
+  { emoji: '🌟', text: 'Health', placeholder: 'Wish for good health and family safety...' },
+  { emoji: '🏠', text: 'Home', placeholder: 'Hope for a warm and cozy home...' },
+  { emoji: '👨‍👩‍👧‍👦', text: 'Family', placeholder: 'Wish for family harmony and happiness...' },
+  { emoji: '🎯', text: 'Career', placeholder: 'Hope for work success and promotion...' },
 ];
 
 export default function CreateMessageForm({ onMessageCreated }: CreateMessageFormProps) {
@@ -39,12 +39,12 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
 
   const handleSubmit = async (data: MessageFormData) => {
     if (!user) {
-      setError('请先登录');
+      setError('Please login first');
       return;
     }
 
     if (data.content.length < 3 || data.content.length > 200) {
-      setError('心愿内容长度必须在3-200字之间');
+      setError('Wish content must be between 3-200 characters');
       return;
     }
 
@@ -62,10 +62,10 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
         setCharCount(0);
         setSelectedCategory('');
       } else {
-        setError('许愿失败，请稍后重试');
+        setError('Failed to make wish, please try again later');
       }
     } catch (err) {
-      setError('许愿失败，请稍后重试');
+      setError('Failed to make wish, please try again later');
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
     form.setValue('content', '');
     setCharCount(0);
     
-    // 自动聚焦到文本框
+    // Auto focus to textarea
     const textarea = document.getElementById('content') as HTMLTextAreaElement;
     if (textarea) {
       textarea.placeholder = category.placeholder;
@@ -97,8 +97,8 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
           <div className="text-center space-y-4">
             <div className="text-6xl">🌟</div>
             <div>
-              <p className="text-gray-600 text-lg mb-2">加入许愿墙</p>
-              <p className="text-gray-500 text-sm">登录后就可以许下你的美好心愿了</p>
+              <p className="text-gray-600 text-lg mb-2">Join the Wish Wall</p>
+              <p className="text-gray-500 text-sm">Login to make your beautiful wishes</p>
             </div>
           </div>
         </CardContent>
@@ -110,17 +110,17 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
     <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-center text-2xl text-gray-800">
-          🌠 许下你的心愿
+          🌠 Make Your Wish
         </CardTitle>
         <p className="text-center text-gray-600 text-sm">
-          选择一个类别，写下你的美好愿望
+          Choose a category and write down your beautiful wish
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Wish Categories */}
         <div>
           <Label className="text-sm font-medium text-gray-700 mb-3 block">
-            选择心愿类别
+            Choose Wish Category
           </Label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {wishCategories.map((category) => (
@@ -150,14 +150,14 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="content" className="text-sm font-medium text-gray-700">
-              ✨ 心愿内容
+              ✨ Wish Content
             </Label>
             <Textarea
               id="content"
               placeholder={
                 selectedCategory 
-                  ? wishCategories.find(c => c.text === selectedCategory)?.placeholder || "写下你的美好心愿... (3-200字)"
-                  : "写下你的美好心愿... (3-200字)"
+                  ? wishCategories.find(c => c.text === selectedCategory)?.placeholder || "Write your beautiful wish... (3-200 characters)"
+                  : "Write your beautiful wish... (3-200 characters)"
               }
               className="min-h-[120px] resize-none border-gray-200 focus:border-purple-400 focus:ring-purple-400"
               {...form.register('content', { 
@@ -179,14 +179,14 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
                         : 'text-green-600'
                 }`}
               >
-                {charCount}/200 字
+                {charCount}/200 characters
               </span>
               {charCount < 3 && (
-                <span className="text-gray-400">至少输入3个字符</span>
+                <span className="text-gray-400">At least 3 characters required</span>
               )}
               {charCount > 180 && (
                 <span className="text-red-500">
-                  {charCount > 200 ? '超出字数限制' : '接近字数限制'}
+                  {charCount > 200 ? 'Character limit exceeded' : 'Approaching character limit'}
                 </span>
               )}
             </div>
@@ -201,12 +201,12 @@ export default function CreateMessageForm({ onMessageCreated }: CreateMessageFor
               {loading ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                  <span>许愿中...</span>
+                  <span>Making wish...</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <span>🌟</span>
-                  <span>许愿</span>
+                  <span>Make Wish</span>
                 </div>
               )}
             </Button>
